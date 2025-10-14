@@ -1,5 +1,5 @@
-#include "page.h"
-#include "MainPage.h"
+#include "utils/page.h"
+#include "utils/MainPage.h"
 #include <display_manager.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>

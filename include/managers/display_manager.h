@@ -3,7 +3,7 @@
 #include <SDL2/SDL_image.h>
 #include <string>
 #include <iostream>
-#include "page.h"
+#include "utils/page.h"
 
 enum class PageType {
     MAIN,
