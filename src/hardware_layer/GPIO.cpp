@@ -9,6 +9,8 @@ GPIOPin::GPIOPin(int pin) : pinNumber(pin) {
         std::cerr << "Failed to open GPIO chip or get line" << std::endl;
         return;
     }
+
+    std::cout << "GPIO Initialized" << std::endl;
 }
 
 GPIOPin::~GPIOPin() {

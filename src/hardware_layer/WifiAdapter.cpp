@@ -12,8 +12,14 @@ bool WifiAdapter::scan(std::vector<std::string> &networks) {
     }
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), pipe)) {
-        
+        std::string ssid(buffer);
+        ssid.erase(ssid.find_last_not_of(" \n\r\t") + 1); // Trim whitespace
+        if (!ssid.empty()) {
+            networks.push_back(ssid);
+        }
     }
+    pclose(pipe);
+    return !networks.empty();
 }
 
 bool WifiAdapter::connect(const std::string& ssid, const std::string& password) {

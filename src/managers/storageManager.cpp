@@ -3,15 +3,18 @@
 #include <iostream>
 
 storageManager::storageManager(const std::string& filepath_) : filepath_(filepath_) {}
+storageManager::~storageManager() {}
 
 bool storageManager::load() {
+    std::cout << "loading config " << std::endl;
     std::ifstream file(filepath_);
     if (!file.is_open()) {
         data_ = {
             {"alarm_time", "07:00"},
             {"rtc_time", "12:00"},
-            {"wifi_credentials", {{"ssid", ""}, {"password", ""}}}
+            {"wifi_credentials", {{"ssid", "iPhone"}, {"password", "oneoneSeven"}}}
         };
+        std::cout << "no config file found using defaults" << std::endl;
         return false;
     }
     try {
@@ -39,7 +42,12 @@ bool storageManager::save() {
 }
 
 std::string storageManager::get(const std::string& key) {
-    if (data_.contains(key)) return data_.at(key).dump();
+    if (data_.contains(key)) {
+        if (data_[key].is_string()) {
+            return data_[key].get<std::string>();
+        }
+        return data_.at(key).dump();
+    }
     return "";
 }
 
@@ -48,11 +56,11 @@ void storageManager::set(const std::string& key, const std::string& value) {
 }
 
 std::string storageManager::getWifiSSID() {
-    return data_["wifi_credentials"]["ssid"];
+    return data_["wifi_credentials"]["ssid"].get<std::string>();
 }
 
 std::string storageManager::getWifiPassword() {
-    return data_["wifi_credentials"]["password"];
+    return data_["wifi_credentials"]["password"].get<std::string>();
 }
 
 void storageManager::setWifiCredentials(const std::string& ssid, const std::string& password) {
@@ -61,7 +69,9 @@ void storageManager::setWifiCredentials(const std::string& ssid, const std::stri
 }
 
 std::string storageManager::getAlarmTime() {
-    return data_["alarm_time"];
+    if (data_.contains("alarm_time")) return data_["alarm_time"].get<std::string>();
+
+    return "07:00";
 }
 
 void storageManager::setAlarmTime(const std::string& time) {

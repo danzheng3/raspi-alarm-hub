@@ -1,4 +1,3 @@
-#add_subdirectory(hardware_layer)
 add_subdirectory(utils)
 add_subdirectory(managers)
 add_subdirectory(hardware_layer)
@@ -17,8 +16,12 @@ target_link_libraries(Raspi-Alarm-Hub
     PRIVATE
         utils 
         managers
+        hardware_layer
         SDL2::SDL2
         SDL2_ttf::SDL2_ttf
         SDL2_image::SDL2_image 
 )
+
+target_include_directories(Raspi-Alarm-Hub PUBLIC ${PROJECT_SOURCE_DIR}/include)
+
 

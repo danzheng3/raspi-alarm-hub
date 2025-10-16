@@ -1,7 +1,8 @@
 #include <string>
 #include <vector>
-#include "../hardware_layer/BluetoothAdapter.h"
-#include "../hardware_layer/WifiAdapter.h"
+#pragma once
+#include "hardware_layer/BluetoothAdapter.h"
+#include "hardware_layer/WifiAdapter.h"
 #include "storageManager.h"
 
 class connectivityManager {

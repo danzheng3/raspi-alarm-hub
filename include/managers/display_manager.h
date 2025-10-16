@@ -1,9 +1,11 @@
+#pragma once
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 #include <string>
 #include <iostream>
 #include "utils/page.h"
+#include <atomic>
 
 enum class PageType {
     MAIN,
@@ -14,13 +16,14 @@ enum class PageType {
 
 class DisplayManager {
     public:
-        DisplayManager();
+        DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr);
         ~DisplayManager();
 
-        void run();
+        void run(std::atomic<bool>& running);
+        void changePage(PageType newPage);
+
 
     private:
-        void changePage(PageType newPage);
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
 
@@ -29,6 +32,10 @@ class DisplayManager {
 
         Page* currentPage = nullptr;
         PageType currentPageType = PageType::MAIN;
+
+        timeManager* timeMgr;
+        alarmManager* alarmMgr;
+        connectivityManager* connMgr;
 
         /*
         bool wifiConnected;
