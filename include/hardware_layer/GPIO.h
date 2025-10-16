@@ -1,8 +1,9 @@
 #include <gpiod.h>
+#include <string>
 
 class GPIOPin {
     public:
-        GPIOPin(int pin) : pinNumber(pin) {};
+        GPIOPin(int pin);
         ~GPIOPin();
 
         bool pinHigh(); // set pin high/low

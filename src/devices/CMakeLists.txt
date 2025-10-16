@@ -5,4 +5,4 @@ add_library(devices
     strobe.cpp
 )
 
-target_include_directories(bus PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(devices PUBLIC ${PROJECT_SOURCE_DIR}/include)

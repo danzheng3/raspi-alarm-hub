@@ -1,6 +1,8 @@
 #add_subdirectory(hardware_layer)
 add_subdirectory(utils)
 add_subdirectory(managers)
+add_subdirectory(hardware_layer)
+add_subdirectory(devices)
 
 set(SDL2_DIR "/usr/lib/x86_64-linux-gnu/cmake/SDL2")
 set(SDL2_ttf_DIR "/usr/lib/x86_64-linux-gnu/cmake/SDL2_ttf")

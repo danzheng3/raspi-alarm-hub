@@ -1,8 +1,7 @@
-add_subdirectory(bus devices)
-add_subdirectory(devices)
 add_library(hardware_layer
-    bus
-    devices
+    I2CBus.cpp
+    SPIBus.cpp
+    GPIO.cpp
 )
 
 target_include_directories(hardware_layer PUBLIC ${PROJECT_SOURCE_DIR}/include)
