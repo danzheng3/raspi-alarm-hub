@@ -33,7 +33,7 @@ bool BluetoothAdapter::isConnected() {
     return output.find("Connected: yes") != std::string::npos;
 }
 
-void BluetoothAdapter::connectToDevice(const std::string& deviceAddress) {
+bool BluetoothAdapter::connectToDevice(const std::string& deviceAddress) {
     speakerID = deviceAddress;
     std::cout << "Connecting to device: " << deviceAddress << std::endl;
     runCommand("bluetoothctl trust " + deviceAddress);
@@ -41,8 +41,10 @@ void BluetoothAdapter::connectToDevice(const std::string& deviceAddress) {
     connected = isConnected();
     if (connected) {
         std::cout << "Connected to " << deviceAddress << std::endl;
+        return true;
     } else {
         std::cout << "Failed to connect to " << deviceAddress << std::endl;
+        return false;
     }
 }
 

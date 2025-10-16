@@ -1,24 +1,35 @@
 #include <string>
 #include <vector>
+#include "../hardware_layer/BluetoothAdapter.h"
+#include "../hardware_layer/WifiAdapter.h"
+#include "storageManager.h"
 
 class connectivityManager {
 public:
-    connectivityManager();
+    connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdapter& btAdapter, storageManager& storage);
     ~connectivityManager();
 
-    bool initBluetooth();
-    bool initWifiEnabled();
-    bool isBluetoothConnected();
-    bool isWifiConnected();
+    void init();
 
     bool connectToWifi(const std::string& ssid, const std::string& password);
-    bool disconnectWifi();
-    bool scanForWifiNetworks(std::vector<std::string>& networks);
-    bool connectToSpeaker(const std::string& deviceAddress);
-    bool disconnectSpeaker();
+    void disconnectWifi();
+    bool connectBluetooth(const std::string& deviceAddress);
+    void disconnectBluetooth();
+
+    bool isWifiConnected();
+    bool isBluetoothConnected();
+
 private:
-    bool bluetoothConnected;
-    bool wifiConnected;
+    WifiAdapter& wifiAdapter;
+    BluetoothAdapter& btAdapter;
+    storageManager& storage;
+
     std::string currentSSID;
+    std::string currentSpeakerID;
+    std::string wifiPassword;
+
+    void loadCredentials();
+    void saveWifiCredentials(const std::string& ssid, const std::string& password);
+    void saveBluetoothSpeakerID(const std::string& speakerID);
 
 };

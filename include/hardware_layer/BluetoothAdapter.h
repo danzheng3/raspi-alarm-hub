@@ -5,7 +5,7 @@ class BluetoothAdapter {
         BluetoothAdapter();
         ~BluetoothAdapter();
         void initialize();
-        void connectToDevice(const std::string& deviceAddress);
+        bool connectToDevice(const std::string& deviceAddress);
         void disconnect();
         bool isConnected();
 

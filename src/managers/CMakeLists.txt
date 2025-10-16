@@ -1,6 +1,9 @@
 add_library(managers 
     display_manager.cpp
-
+    alarmManager.cpp
+    storageManager.cpp
+    timeManager.cpp
+    connectivityManager.cpp
 )
 
 target_include_directories(managers PUBLIC ${PROJECT_SOURCE_DIR}/include)
