@@ -2,10 +2,11 @@
 
 #include <string>
 #include "storageManager.h"
+#include "devices/MCP7940N.h"
 
 class timeManager {
     public:
-        timeManager(storageManager& storage);
+        timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module);
         ~timeManager();
 
         std::string getCurrentTime() const;
@@ -15,4 +16,5 @@ class timeManager {
     private:
         std::string currentTime;
         storageManager& storage;
+        std::shared_ptr<MCP7940N> shared_rtc;
 };

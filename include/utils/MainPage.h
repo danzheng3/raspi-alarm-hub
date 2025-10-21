@@ -10,7 +10,7 @@ public:
     MainPage(timeManager* timeMgr = nullptr, alarmManager* alarmMgr = nullptr, connectivityManager* connMgr = nullptr);
     ~MainPage();
     void render(SDL_Renderer* renderer) override;
-
+    SDL_Rect renderLabeledBox(SDL_Renderer* renderer, const std::string& text, int x, int y, bool drawBox, bool* wasTouched);
     void handleEvent(const SDL_Event& event) override;
 
 private:
@@ -47,5 +47,6 @@ private:
     SDL_Rect SaveRect, CancelRect;
     SDL_Rect timeDisplayRect;
     SDL_Rect alarmDisplayRect;
+    SDL_Color Black = {0,0,0,255};
 
 };
