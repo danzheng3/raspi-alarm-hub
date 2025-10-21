@@ -9,6 +9,8 @@
 #include <chrono>
 #include <atomic>
 
+const std::string I2C_BUS_PATH = "/dev/i2c-1";
+
 
 
 std::atomic<bool> running(true);
@@ -17,14 +19,16 @@ int main() {
     storageManager storage;
     storage.load();
 
-    timeManager timeMgr(storage);
+    auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
+    auto rtc = std::make_shared<MCP7940N>(bus);
+
+    timeManager timeMgr(storage, rtc);
     
     alarmManager alarmMgr(storage, timeMgr);
     WifiAdapter wifiAdapter;
     BluetoothAdapter btAdapter;
     connectivityManager connMgr(wifiAdapter, btAdapter, storage);
     connMgr.init();
-    std::cout << "Number of touch devices: " << SDL_GetNumTouchDevices() << std::endl;
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr);
 
     std::cout << "=== Initialization Complete ===" << std::endl;

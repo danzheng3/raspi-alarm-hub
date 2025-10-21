@@ -2,6 +2,7 @@
 
 # install required dependencies
 
+
 nmcli device wifi connect "ER-S GRANT APT 13" password "CVG455wmz$" ifname wlan0
 
 nmcli -t -f GENERAL.STATE device show wlan0 | grep -q "connected" || {
@@ -23,3 +24,6 @@ sudo apt install libgpiod-dev
 sudo apt install nlohmann-json3-dev
 
 ##NOTE: need to enable dtparam=i2c_arm=on in /boot/config.txt to configure I2C
+
+
+##NOTE2: PRE-SAVED CONFIGURATIONS UNDER 'CONFIG.JSON' in build/src

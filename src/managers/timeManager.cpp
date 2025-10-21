@@ -1,8 +1,11 @@
 #include "managers/timeManager.h"
 #include <iostream>
 
-timeManager::timeManager(storageManager& storage) : storage(storage) {
+timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module) 
+    : storage(storage), shared_rtc(rtc_module) {
     //currentTime = storage.getRTCTime();
+    syncFromRTC();
+    
     if (currentTime.empty()) {
         currentTime = "12:00"; // none from rtc
     std::cout << "initialized timeManager with time " << currentTime << std::endl;
@@ -32,6 +35,10 @@ void timeManager::setTime(const std::string& time) {
 
 void timeManager::syncFromRTC() {
     // READ FROM RTC
-    // currentTIme = rtc.getTime();
+    RTC_Time currTime;
+    if (!(shared_rtc->getTime(currTime))) {
+        std::cout << "error reading rtc time in sync" << std::endl; 
+    }
+
     std::cout << "Time synchronized from RTC: " << currentTime << std::endl;
 }

@@ -19,6 +19,9 @@ bool storageManager::load() {
     }
     try {
         file >> data_;
+        std::cout << "data file loaded!" << std::endl;
+        std::cout << data_ << std::endl;
+
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;

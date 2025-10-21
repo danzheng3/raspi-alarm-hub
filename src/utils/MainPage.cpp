@@ -8,7 +8,6 @@ MainPage::MainPage(timeManager* timeMgr, alarmManager* alarmMgr, connectivityMan
     font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48);
     smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36);
     
-    // Initialize adjusted time from current time
     if (timeMgr) {
         std::string currentTime = timeMgr->getCurrentTime();
         // Parse HH:MM format
@@ -29,7 +28,6 @@ MainPage::~MainPage() {
 }
 
 void MainPage::render(SDL_Renderer* renderer) {
-    // Background gray
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderClear(renderer);
 
@@ -39,12 +37,11 @@ void MainPage::render(SDL_Renderer* renderer) {
     std::string wifiStatus = connMgr ? (connMgr->isWifiConnected() ? "WiFi: Connected" : "WiFi: Disconnected") : "WiFi: Unknown";
     renderText(renderer, wifiStatus, 50, 50, black, smallFont);
 
-    // Display current time (center) - make it a tappable area
+    // Display current time
     std::string currentTime = timeMgr ? timeMgr->getCurrentTime() : "--:--";
     int centerX = 720 / 2 - 150;
     int centerY = 1280 / 2 - 80;
     
-    // Draw a subtle box around the time to indicate it's tappable
     timeDisplayRect = { centerX - 20, centerY - 20, 340, 120 };
     SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
     SDL_RenderDrawRect(renderer, &timeDisplayRect);
@@ -98,19 +95,6 @@ void MainPage::handleEvent(const SDL_Event& e) {
             }
         }
         
-        // Check if time display area was touched
-        /*if (isPointInRect(touchX, touchY, timeDisplayRect) && !adjustingTime) {
-            adjustingTime = true;
-            // Reset to current time when opening popup
-            if (timeMgr) {
-                std::string currentTime = timeMgr->getCurrentTime();
-                size_t colonPos = currentTime.find(':');
-                if (colonPos != std::string::npos) {
-                    adjustedHour = std::stoi(currentTime.substr(0, colonPos));
-                    adjustedMinute = std::stoi(currentTime.substr(colonPos + 1));
-                }
-            }
-        }*/
         
         // Handle popup button touches
         else { 
@@ -253,4 +237,18 @@ void MainPage::drawCircle(SDL_Renderer* renderer, int centerX, int centerY, int 
             }
         }
     }
+}
+
+SDL_Rect MainPage::renderLabeledBox(SDL_Renderer* renderer,
+                                    const std:: string& text,
+                                    int x, int y,
+                                    bool drawBox,
+                                    bool* wasTouched)
+{
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), Black);
+    if (!surface) return {x,y,0,0};
+
+    
+
+
 }
