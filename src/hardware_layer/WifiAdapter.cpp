@@ -1,4 +1,5 @@
 #include "hardware_layer/WifiAdapter.h"
+#include <iostream>
 
 WifiAdapter::WifiAdapter() : connected(false), ipAddress("") {}
 
@@ -25,6 +26,12 @@ bool WifiAdapter::scan(std::vector<std::string> &networks) {
 bool WifiAdapter::connect(const std::string& ssid, const std::string& password) {
     std::string command = "nmcli dev wifi connect '" + ssid + "' password '" + password + "'";
     int result = system(command.c_str());
+    std::cout << "wifi connect command after: " << result << std::endl;
+    if (result != 0) {
+        connected = false;
+        ipAddress = "";
+        return connected;
+    }
     connected = true; // Simulate successful connection
     ipAddress = "";
     return connected;

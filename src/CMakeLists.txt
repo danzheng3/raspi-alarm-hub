@@ -17,6 +17,7 @@ target_link_libraries(Raspi-Alarm-Hub
         utils 
         managers
         hardware_layer
+        devices
         SDL2::SDL2
         SDL2_ttf::SDL2_ttf
         SDL2_image::SDL2_image 

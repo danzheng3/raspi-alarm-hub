@@ -1,4 +1,7 @@
 #include "hardware_layer/GPIO.h"
+#pragma once
+
+#define STROBE_PIN 25
 
 class strobe {
     public:
@@ -7,5 +10,9 @@ class strobe {
 
         bool strobeActivate();
         bool strobeToNormal();
+
+    private:
+        GPIOPin strobePin;
+        bool strobeState = false;
 
 };

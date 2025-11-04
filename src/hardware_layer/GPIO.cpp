@@ -3,7 +3,7 @@
 #include <iostream>
 
 GPIOPin::GPIOPin(int pin) : pinNumber(pin) {
-    chip = gpiod_chip_open_by_name("gpiochip0");
+    chip = gpiod_chip_open_by_name("gpiochip0"); // MOST LIKELY NEED TO MODIFY BASED ON CHIPNUM
     line = gpiod_chip_get_line(chip, pinNumber);
     if (!chip || !line) {
         std::cerr << "Failed to open GPIO chip or get line" << std::endl;

@@ -25,10 +25,13 @@ int main() {
     timeManager timeMgr(storage, rtc);
     
     alarmManager alarmMgr(storage, timeMgr);
+    std::cout << "alarmMgr initialized" << std::endl;
     WifiAdapter wifiAdapter;
+    std::cout << "wifiMgr initialized" << std::endl;
     BluetoothAdapter btAdapter;
+    std::cout << "btMgr initialized" << std::endl;
     connectivityManager connMgr(wifiAdapter, btAdapter, storage);
-    connMgr.init();
+    std::cout << "connMgr initialized" << std::endl;
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr);
 
     std::cout << "=== Initialization Complete ===" << std::endl;
@@ -36,6 +39,9 @@ int main() {
     std::cout << "Alarm enabled: " << (alarmMgr.isAlarmEnabled() ? "Yes" : "No") << std::endl;
     std::cout << "WiFi connected: " << (connMgr.isWifiConnected() ? "Yes" : "No") << std::endl;
     std::cout << "===============================" << std::endl;
+
+    return 0;
+    // finish for now
 
     std::thread logicThread([&]() {
         while (running) {

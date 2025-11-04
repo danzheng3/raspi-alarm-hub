@@ -59,22 +59,22 @@ void storageManager::set(const std::string& key, const std::string& value) {
 }
 
 std::string storageManager::getWifiSSID() {
-    return data_["wifi_credentials"]["ssid"].get<std::string>();
+    return data_["wifi_credentials"][0]["ssid"].get<std::string>();
 }
 
 std::string storageManager::getWifiPassword() {
-    return data_["wifi_credentials"]["password"].get<std::string>();
+    return data_["wifi_credentials"][0]["password"].get<std::string>();
 }
 
 void storageManager::setWifiCredentials(const std::string& ssid, const std::string& password) {
-    data_["wifi_credentials"]["ssid"] = ssid;
-    data_["wifi_credentials"]["password"] = password;
+    data_["wifi_credentials"][0]["ssid"] = ssid;
+    data_["wifi_credentials"][0]["password"] = password;
 }
 
 std::string storageManager::getAlarmTime() {
     if (data_.contains("alarm_time")) return data_["alarm_time"].get<std::string>();
 
-    return "07:00";
+    return "no alarm time";
 }
 
 void storageManager::setAlarmTime(const std::string& time) {

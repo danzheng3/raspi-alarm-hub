@@ -3,11 +3,13 @@
 
 connectivityManager::connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdapter& btAdapter, storageManager& storage)
     : wifiAdapter(wifiAdapter), btAdapter(btAdapter), storage(storage) {
+        init();
 }
 
 void connectivityManager::loadCredentials() {
     currentSSID = storage.getWifiSSID();
     wifiPassword = storage.getWifiPassword();
+    std::cout << "loaded wifi ssid, pswd" << std::endl;
     //currentSpeakerID = storage.get("bluetooth_speaker_id");
 }
 

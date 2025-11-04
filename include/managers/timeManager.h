@@ -3,6 +3,7 @@
 #include <string>
 #include "storageManager.h"
 #include "devices/MCP7940N.h"
+#include <unistd.h>
 
 class timeManager {
     public:
