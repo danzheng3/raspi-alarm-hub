@@ -23,6 +23,17 @@ sudo apt install libgpiod-dev
 #saving to json
 sudo apt install nlohmann-json3-dev
 
+#audio drivers
+sudo apt install pulseaudio pulseaudio-utils libpulse-dev
+sudo apt install libalsa-dev alsa-utils
+sudo apt install mpg123
+
+echo "dtparam=spi=on" | sudo tee -a /boot/firmware/config.txt
+echo "dtoverlay=mmc-spi-slot" | sudo tee -a /boot/firmware/config.txt
+echo "dtoverlay=pwm,pin=18,func=4" | sudo tee -a /boot/firmware/config.txt
+#enable pwm
+sudo modprobe spi_bcm2835
+sudo modprobe mmc_spi
 ##NOTE: need to enable dtparam=i2c_arm=on in /boot/config.txt to configure I2C
 
 

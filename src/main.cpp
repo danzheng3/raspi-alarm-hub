@@ -4,6 +4,7 @@
 #include "timeManager.h"
 #include "storageManager.h"
 #include "display_manager.h"
+#include "audioManager.h"
 
 #include <thread>
 #include <chrono>
@@ -32,6 +33,9 @@ int main() {
     std::cout << "btMgr initialized" << std::endl;
     connectivityManager connMgr(wifiAdapter, btAdapter, storage);
     std::cout << "connMgr initialized" << std::endl;
+
+    audioManager audioMgr(&connMgr);
+    std::cout << "audioMgr initialized" << std::endl;
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr);
 
     std::cout << "=== Initialization Complete ===" << std::endl;
