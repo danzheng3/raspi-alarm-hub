@@ -41,7 +41,7 @@ void timeManager::syncFromRTC() {
         return;
     }
     char buffer[9];
-    snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", currTime.hours, currTime.minutes, currTime.seconds);
+    snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", currTime.hours, currTime.minutes, currTime.seconds); // NEED TO FIX TIME SYNC
     std::string adj_time = std::string(buffer);
     adj_time = adj_time.substr(0,5); // HH:MM
     currentTime = std::string(buffer); // NEED TO FIX LATER FOR RTC LOGIC

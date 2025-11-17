@@ -1,11 +1,14 @@
 #include <string>
 #include "storageManager.h"
 #include "timeManager.h"
+#include "events/Events.h"
+#include "events/EventBus.h"
+#pragma once
 
 
 class alarmManager {
     public:
-        alarmManager(storageManager& storage, timeManager& timeMgr);
+        alarmManager(storageManager& storage, timeManager& timeMgr, EventBus* eventBus);
         ~alarmManager();
 
         void setAlarm(const std::string& time);
@@ -23,4 +26,6 @@ class alarmManager {
         bool alarmTriggered;
         std::string alarmTime;
         storageManager& storage;
+
+        EventBus* m_eventBus;
 };

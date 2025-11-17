@@ -1,9 +1,13 @@
 #include "managers/alarmManager.h"
 #include <iostream>
 
-alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr) : storage(storage), timeMgr(timeMgr) {
+alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventBus* eventBus) 
+    : storage(storage), timeMgr(timeMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false) {
     loadFromStorage();
+
+    m_eventBus->subscribe<UIStopAlarmPressedEvent>(this, &alarmManager::onUIStopAlarmPressed);
 }
+
 
 alarmManager::~alarmManager() {}
 

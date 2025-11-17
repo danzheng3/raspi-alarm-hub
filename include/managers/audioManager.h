@@ -6,6 +6,10 @@
 #include <filesystem>
 #include <algorithm>
 #include "managers/connectivityManager.h"
+#include "events/EventBus.h"
+#include "events/Events.h"
+
+#define ALARM_RING_PATH "../../images/alarm_ring.mp3"
 
 struct Song {
     std::string title;
@@ -17,7 +21,7 @@ class audioManager {
     public:
         enum class AudioOutput { AUTO, JACK, BLUETOOTH };
         enum class AudioState { STOPPED, PLAYING, PAUSED };
-        audioManager(connectivityManager* connMgr);
+        audioManager(connectivityManager* connMgr, EventBus* eventBus);
         // may need to add parameters, plus duplicate depending on when sd slot is added.
         ~audioManager();
 
@@ -31,6 +35,8 @@ class audioManager {
         AudioState getState();
         void setVolume(int volume); //0-100 percentage
 
+        void alarmRing();
+
         // need functions for changing volume, and equalizer settings
 
 
@@ -42,7 +48,14 @@ class audioManager {
         int currentVolume = 50; // default volume 50%
         void scanForSongs();
         std::vector<Song> songList;
-        std::string jackSink;
-        std::string btSink;
+        std::string jackSink = "default"; // need to set sink name
+        std::string btSink = "bluetooth-default"; // need to set sink name!
 
+        // EVENT-HANDLERS
+        void onAlarmTriggered(const AlarmTriggeredEvent& event);
+        void onAlarmStopped(const AlarmClearedEvent& event);
+
+        connectivityManager* connMgr;
+        EventBus* m_eventBus;
+        
 };

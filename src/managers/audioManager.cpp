@@ -10,8 +10,6 @@ audioManager::audioManager(connectivityManager* connMgr) : connMgr(connMgr) {
 
     songList.clear();
     scanForSongs();
-
-
 }
 
 audioManager::~audioManager() {
@@ -110,6 +108,16 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
     system(command.c_str());
     currentVolume = volume;
 } 
+
+void audioManager::alarmRing() {
+    stop();
+    std::string command = "mpg123 --loop -1 '" + std::string(ALARM_RING_PATH) + "' &"; // NEED TO TEST FILEPATH
+    setVolume(100); // max volume for alarm
+
+    system(command.c_str());
+    currentState = AudioState::PLAYING;
+    std::cout << "alarm ringing!" << std::endl;
+}
 
 /*
 Play: mpg123 "path/to/song.mp3" & 
