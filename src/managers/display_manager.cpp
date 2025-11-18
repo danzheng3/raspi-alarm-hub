@@ -6,8 +6,8 @@
 #include <SDL2/SDL_image.h>
 
 
-DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr)
-    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), window(nullptr), renderer(nullptr), font(nullptr), weatherIcon(nullptr), currentPage(nullptr)
+DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr, EventBus* eventBus)
+    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), window(nullptr), renderer(nullptr), font(nullptr), weatherIcon(nullptr), currentPage(nullptr), m_eventBus(eventBus)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0) {
         std::cerr << "Could not initialize SDL: " << SDL_GetError() << std::endl;
@@ -37,6 +37,15 @@ DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, con
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     std::cout << "displaymanager initialized" << std::endl;
+
+    if (m_eventBus) {
+        m_eventBus->subscribe<AlarmTriggeredEvent>(this, &DisplayManager::onAlarmTriggered);
+        m_eventBus->subscribe<AlarmClearedEvent>(this, &DisplayManager::onAlarmCleared);
+        m_eventBus->subscribe<AlarmSetEvent>(this, &DisplayManager::onAlarmSet);
+        m_eventBus->subscribe<TimeUpdatedEvent>(this, &DisplayManager::onTimeUpdated);
+        m_eventBus->subscribe<WifiStatusChangedEvent>(this, &DisplayManager::onWifiStatusChanged);
+        m_eventBus->subscribe<WeatherUpdatedEvent>(this, &DisplayManager::onWeatherUpdated);
+    }
     changePage(PageType::MAIN);
 
 }
@@ -102,3 +111,46 @@ void DisplayManager::run(std::atomic<bool>& running) {
         SDL_Delay(16);  // ~ 60 FPS
     }
 }
+
+// EVENT HANDLRS
+
+void DisplayManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
+    std::cout << "displaymanager: alarm triggered, show UI" << std::endl;
+    m_isAlarmActive = true;
+
+    // change UI, trigger
+}
+
+void DisplayManager::onAlarmCleared(const AlarmClearedEvent& event) {
+    std::cout << "Displaymanager: alarm cleared, returning to normal UI" << std::endl;
+    m_isAlarmActive = false;
+}
+
+void DisplayManager::onAlarmSet(const AlarmSetEvent& event) {
+    std::cout << "Displaymanager: alarm set to " << event.newTime << std::endl;
+    m_alarmTime = event.newTime;
+
+    //update display
+}
+
+void DisplayManager::onTimeUpdated(const TimeUpdatedEvent& event) {
+    m_currentTime = event.currentTime;
+}
+
+void DisplayManager::onWifiStatusChanged(const WifiStatusChangedEvent& event) {
+    std::cout << "DisplayManager: WiFi status changed: " 
+              << (event.isConnected ? "Connected" : "Disconnected") << std::endl;
+    m_isWifiConnected = event.isConnected;
+    // Update WiFi icon in UI
+}
+
+void DisplayManager::onWeatherUpdated(const WeatherUpdatedEvent& event) {
+    std::cout << "DisplayManager: Weather updated: " << event.temperature 
+              << "°, " << event.condition << std::endl;
+    m_temperature = event.temperature;
+    m_weatherCondition = event.condition;
+    // Update weather display
+}
+
+
+

@@ -4,10 +4,12 @@
 #include "hardware_layer/BluetoothAdapter.h"
 #include "hardware_layer/WifiAdapter.h"
 #include "storageManager.h"
+#include "events/EventBus.h"
+#include "events/Events.h"
 
 class connectivityManager {
 public:
-    connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdapter& btAdapter, storageManager& storage);
+    connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdapter& btAdapter, storageManager& storage, EventBus* eventBus);
     ~connectivityManager();
 
     void init();
@@ -24,6 +26,7 @@ private:
     WifiAdapter& wifiAdapter;
     BluetoothAdapter& btAdapter;
     storageManager& storage;
+    EventBus* m_eventBus;
 
     std::string currentSSID;
     std::string currentSpeakerID;

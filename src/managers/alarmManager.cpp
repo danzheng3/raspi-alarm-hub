@@ -5,7 +5,9 @@ alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventB
     : storage(storage), timeMgr(timeMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false) {
     loadFromStorage();
 
-    m_eventBus->subscribe<UIStopAlarmPressedEvent>(this, &alarmManager::onUIStopAlarmPressed);
+    if (m_eventBus) {
+        m_eventBus->subscribe<UIStopAlarmPressedEvent>(this, &alarmManager::onUIStopAlarmPressed);
+    }
 }
 
 
@@ -28,6 +30,13 @@ void alarmManager::setAlarm(const std::string& time) {
     alarmEnabled = true;
     alarmTriggered = false;
     std::cout << "set alarm " << alarmTime << std::endl;
+
+    // publish event
+    if (m_eventBus) {
+        AlarmSetEvent event;
+        event.newTime = time;
+        m_eventBus->publish(event);
+    }
 }
 
 bool alarmManager::isAlarmEnabled() const {
@@ -52,5 +61,14 @@ bool alarmManager::shouldTrigger() {
     return false;
 }
 
+void alarmManager::onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event) {
+    std::cout << "alarmManager: stop alarm button pressed" << std::endl;
+    alarmTriggered = false;
+
+    if (m_eventBus) {
+        AlarmClearedEvent clearEvent;
+        m_eventBus->publish(clearEvent);
+    }
+}
 
 

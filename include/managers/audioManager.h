@@ -53,7 +53,12 @@ class audioManager {
 
         // EVENT-HANDLERS
         void onAlarmTriggered(const AlarmTriggeredEvent& event);
-        void onAlarmStopped(const AlarmClearedEvent& event);
+        void onAlarmCleared(const AlarmClearedEvent& event);
+        void onUIPlaySongPressed(const UIPlaySongPressedEvent& event);
+        void onUIVolumeChanged(const UIVolumeChanged& event);
+        void onSpeakerDocked(const SpeakerDockedEvent& event);
+        void onSpeakerUndocked(const SpeakerUndockedEvent& event);
+        void onBluetoothConnected(const BluetoothSpeakerConnectedEvent& event);
 
         connectivityManager* connMgr;
         EventBus* m_eventBus;

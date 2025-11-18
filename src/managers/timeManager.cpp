@@ -1,18 +1,23 @@
 #include "managers/timeManager.h"
 #include <iostream>
 
-timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module) 
-    : storage(storage), shared_rtc(rtc_module) {
+timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module, EventBus* eventBus) 
+    : storage(storage), shared_rtc(rtc_module), m_eventBus(eventBus) {
     //currentTime = storage.getRTCTime();
     syncFromRTC();
+
     
     if (currentTime.empty()) {
         currentTime = "12:00"; // none from rtc
         std::cout << "initialized timeManager with time " << currentTime << ". not from rtc" << std::endl;
     }
+
+    lastPublishedTime = getCurrentTime();
 }
 
-timeManager::~timeManager() {}
+timeManager::~timeManager() {
+    //updateRTC();
+}
 
 
 std::string timeManager::getCurrentTime() const {
@@ -48,4 +53,23 @@ void timeManager::syncFromRTC() {
 
     std::cout << "Time synchronized from RTC: " << currentTime << std::endl;
 
+}
+
+void timeManager::updateRTC() {
+    struct tm local_time = getSystemTime();
+    
+    RTC_Time rtcTime;
+    rtcTime.hours = local_time.tm_hour;
+    rtcTime.minutes = local_time.tm_min;
+    rtcTime.seconds = local_time.tm_sec;
+    rtcTime.day = local_time.tm_mday;
+    rtcTime.month = local_time.tm_mon + 1; // RTC expects 1-12
+    rtcTime.year = local_time.tm_year - 100; // RTC stores years since 2000
+    rtcTime.dayOfWeek = local_time.tm_wday;
+    
+    if (shared_rtc->setTime(rtcTime)) {
+        std::cout << "RTC updated from system time: " << getCurrentTime() << std::endl;
+    } else {
+        std::cerr << "Error: Failed to update RTC" << std::endl;
+    }
 }

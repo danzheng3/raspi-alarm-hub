@@ -19,9 +19,16 @@ class EventBus {
     template<typename T, typename U>
     void subscribe(U* subscriber, void (U::*callback)(const T&)) {
         auto type = std::type_index(typeid(T));
+
+        // wrapper for both subscriber and callback
         auto wrapper = [subscriber, callback](std::any event) {
-            (subscriber->*callback)(std::any_cast<const T&>(event));
-        }
+            try {
+                const T& typedEvent = std::any_cast<const T&>(event);
+                (subscriber->*callback)(typedEvent);
+            } catch (const std::bad_any_cast& e) {
+                std::cerr << "EventBus: bad cast for type " << type.name() << std::endl;
+            }
+        };
 
         m_subscribers[type].push_back(wrapper);
         std::cout << "EventBus: New subscriber for " << type.name() << std::endl;
@@ -30,11 +37,14 @@ class EventBus {
     template<typename T>
     void publish(const T& event) {
         auto type = std::type_index(typeid(T));
+
         if (m_subscribers.find(type) == m_subscribers.end()) {
             std::cout << "EventBus: No subscribers for " << type.name() << std::endl;
             return;
         }
 
+        std::cout << "EventBus: publishing " << type.name() << " to " << m_subscribers[type].size() << "subscribers" << std::endl;
+        
         for (auto& subscriber : m_subscribers[type]) {
             subscriber(event);
         }

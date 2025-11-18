@@ -29,9 +29,11 @@ class DisplayManager {
     private:
         // EVENT HANDLERS
         void onAlarmTriggered(const AlarmTriggeredEvent& event);
-        void onAlarmStopped(const AlarmClearedEvent& event);
+        void onAlarmCleared(const AlarmClearedEvent& event);
         void onTimeUpdated(const TimeUpdatedEvent& event);
         void onWifiStatusChanged(const WifiStatusChangedEvent& event);
+        void onWeatherUpdated(const WeatherUpdatedEvent& event);
+        void onAlarmSet(const AlarmSetEvent& event);
 
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
@@ -50,6 +52,10 @@ class DisplayManager {
         //event States
         bool m_isAlarmActive = false;
         bool m_isWifiConnected = false; // need something for time as well
+        std::string m_currentTime;
+        std::string m_alarmTime;
+        int m_temperature = 0;
+        std::string m_weatherCondition;
 
         /*
         bool wifiConnected;

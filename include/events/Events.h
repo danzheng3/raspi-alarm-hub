@@ -18,7 +18,7 @@ struct AlarmClearedEvent {};
 struct UIStopAlarmPressedEvent{};
 struct UIPlaySongPressedEvent{};
 struct UIVolumeChanged{ int newVolume; };
-
+ 
 //Hardware/Connectivity
 
 struct SpeakerDockedEvent{};

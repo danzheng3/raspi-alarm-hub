@@ -5,6 +5,7 @@
 #include "storageManager.h"
 #include "display_manager.h"
 #include "audioManager.h"
+#include "events/EventBus.h"
 
 #include <thread>
 #include <chrono>
@@ -17,26 +18,29 @@ const std::string I2C_BUS_PATH = "/dev/i2c-1";
 std::atomic<bool> running(true);
 
 int main() {
+    EventBus eventBus;
+    std::cout << "eventBus Created" << std::endl;
+
     storageManager storage;
     storage.load();
 
     auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
     auto rtc = std::make_shared<MCP7940N>(bus);
 
-    timeManager timeMgr(storage, rtc);
+    timeManager timeMgr(storage, rtc, &eventBus);
     
-    alarmManager alarmMgr(storage, timeMgr);
+    alarmManager alarmMgr(storage, timeMgr, &eventBus);
     std::cout << "alarmMgr initialized" << std::endl;
     WifiAdapter wifiAdapter;
     std::cout << "wifiMgr initialized" << std::endl;
     BluetoothAdapter btAdapter;
     std::cout << "btMgr initialized" << std::endl;
-    connectivityManager connMgr(wifiAdapter, btAdapter, storage);
+    connectivityManager connMgr(wifiAdapter, btAdapter, storage, &eventBus);
     std::cout << "connMgr initialized" << std::endl;
 
-    audioManager audioMgr(&connMgr);
+    audioManager audioMgr(&connMgr, &eventBus);
     std::cout << "audioMgr initialized" << std::endl;
-    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr);
+    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &eventBus);
 
     std::cout << "=== Initialization Complete ===" << std::endl;
     std::cout << "Initial time: " << timeMgr.getCurrentTime() << std::endl;

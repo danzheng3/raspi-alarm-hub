@@ -28,4 +28,7 @@ class alarmManager {
         storageManager& storage;
 
         EventBus* m_eventBus;
+
+        // event handler
+        void onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event);
 };

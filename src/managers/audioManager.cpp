@@ -1,5 +1,5 @@
 #include "managers/audioManager.h"
-audioManager::audioManager(connectivityManager* connMgr) : connMgr(connMgr) {
+audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : connMgr(connMgr), m_eventBus(eventBus) {
     int rmdir = system("rmdir /mnt/sdcard/audioDataTemp && mkdir /mnt/sdcard/audioDataTemp");
     int mount_sd = system("sudo mount /dev/mmcblk1p1 /mnt/sdcard");
 
@@ -10,6 +10,16 @@ audioManager::audioManager(connectivityManager* connMgr) : connMgr(connMgr) {
 
     songList.clear();
     scanForSongs();
+
+    if (m_eventBus) {
+        m_eventBus->subscribe<AlarmTriggeredEvent>(this, &audioManager::onAlarmTriggered);
+        m_eventBus->subscribe<AlarmClearedEvent>(this, &audioManager::onAlarmCleared);
+        m_eventBus->subscribe<UIPlaySongPressedEvent>(this, &audioManager::onUIPlaySongPressed);
+        m_eventBus->subscribe<UIVolumeChanged>(this, &audioManager::onUIVolumeChanged);
+        m_eventBus->subscribe<SpeakerDockedEvent>(this, &audioManager::onSpeakerDocked);
+        m_eventBus->subscribe<SpeakerUndockedEvent>(this, &audioManager::onSpeakerUndocked);
+        m_eventBus->subscribe<BluetoothSpeakerConnectedEvent>(this, &audioManager::onBluetoothConnected);
+    }
 }
 
 audioManager::~audioManager() {
@@ -118,6 +128,52 @@ void audioManager::alarmRing() {
     currentState = AudioState::PLAYING;
     std::cout << "alarm ringing!" << std::endl;
 }
+
+// event handlers
+
+void audioManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
+    std::cout << "audioManager: alarm triggered event" << std::endl;
+    alarmRing();
+}
+
+void audioManager::onAlarmCleared(const AlarmClearedEvent& event) {
+    std::cout << "audioManager: alarm cleared" << std::endl;
+    stop();
+    //setVolume to previous
+}
+
+void audioManager::onUIPlaySongPressed(const UIPlaySongPressedEvent& event) {
+    std::cout << "audioManager: play song button pressed" << std::endl;
+
+    if (!songList.empty()) {
+        playSong(songList[0]); // need to update logic here
+    }
+}
+
+void audioManager::onUIVolumeChanged(const UIVolumeChanged& event) {
+    std::cout << "audioManager: Volume changed to " << event.newVolume << std::endl;
+    setVolume(event.newVolume);
+}
+
+void audioManager::onSpeakerDocked(const SpeakerDockedEvent& event) {
+    std::cout << "audioManager: Speaker docked, switching to jack output" << std::endl;
+    setOutput(AudioOutput::JACK);
+}
+
+void audioManager::onSpeakerUndocked(const SpeakerUndockedEvent& event) {
+    std::cout << "audioManager: Speaker undocked, switching to auto output" << std::endl;
+    setOutput(AudioOutput::AUTO);
+}
+
+void audioManager::onBluetoothConnected(const BluetoothSpeakerConnectedEvent& event) {
+    std::cout << "audioManager: Bluetooth speaker connected: " << event.deviceName << std::endl;
+    btSink = event.deviceName; // Update sink name
+    if (currentOutput == AudioOutput::AUTO || currentOutput == AudioOutput::BLUETOOTH) {
+        setOutput(AudioOutput::BLUETOOTH);
+    }
+}
+
+
 
 /*
 Play: mpg123 "path/to/song.mp3" & 
