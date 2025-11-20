@@ -4,7 +4,10 @@
 #include "storageManager.h"
 #include "devices/MCP7940N.h"
 #include "events/EventBus.h"
+#include "events/Events.h"
 #include <unistd.h>
+#include <chrono>
+#include <sys/time.h>
 
 class timeManager {
     public:
@@ -16,7 +19,7 @@ class timeManager {
         std::string getCurrentTime() const;
         void setTime(const std::string& time);
         void syncFromRTC();
-        void tick();
+        void updateRTC();
     
     private:
         std::string currentTime;

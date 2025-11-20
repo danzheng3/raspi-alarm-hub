@@ -16,12 +16,15 @@ timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_
 }
 
 timeManager::~timeManager() {
-    //updateRTC();
+    updateRTC();
 }
 
 
 std::string timeManager::getCurrentTime() const {
-    return currentTime;
+    struct tm local_time = getSystemTime();
+    char buffer[6];
+    strftime(buffer, sizeof(buffer), "%H:%M", &local_time);
+    return std::string(buffer);
 }
 
 void timeManager::setTime(const std::string& time) {
@@ -35,21 +38,51 @@ void timeManager::setTime(const std::string& time) {
     }
 
     std::cout << "saving time to rtc" << std::endl;
-    //updateRTC();
+    updateRTC();
 }
 
 void timeManager::syncFromRTC() {
     // READ FROM RTC
-    RTC_Time currTime;
-    if (!(shared_rtc->getTime(currTime))) {
+    RTC_Time rtcTime;
+    if (!(shared_rtc->getTime(rtcTime))) {
         std::cout << "error reading rtc time in sync" << std::endl; 
         return;
     }
+    /* 
     char buffer[9];
     snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", currTime.hours, currTime.minutes, currTime.seconds); // NEED TO FIX TIME SYNC
     std::string adj_time = std::string(buffer);
     adj_time = adj_time.substr(0,5); // HH:MM
     currentTime = std::string(buffer); // NEED TO FIX LATER FOR RTC LOGIC
+    */
+
+    struct tm timeinfo = {}; // convert RTC time to system time
+    timeinfo.tm_hour = rtcTime.hours;
+    timeinfo.tm_min = rtcTime.minutes;
+    timeinfo.tm_sec = rtcTime.seconds;
+    timeinfo.tm_mday = rtcTime.day;
+    timeinfo.tm_mon = rtcTime.month-1;
+    timeinfo.tm_year = rtcTime.year+100;
+    timeinfo.tm_wday = rtcTime.dayOfWeek;
+    timeinfo.tm_isdst =-1;
+    
+    time_t new_time = mktime(&timeinfo);
+
+    struct timeval tv;
+    tv.tv_sec = new_time;
+    tv.tv_usec = 0;
+
+    if(settimeofday(&tv, nullptr) == 0) {
+        std::cout << "system time synced from rtc: " << getCurrentTime() << std::endl;
+
+        if (m_eventBus) {
+            TimeUpdatedEvent event;
+            event.currentTime = getCurrentTime();
+            m_eventBus->publish(event);
+        }
+    } else {
+        std::cerr << "error: failed to set sys time in timeManager" << std::endl;
+    }
 
     std::cout << "Time synchronized from RTC: " << currentTime << std::endl;
 
@@ -72,4 +105,12 @@ void timeManager::updateRTC() {
     } else {
         std::cerr << "Error: Failed to update RTC" << std::endl;
     }
+}
+
+struct tm timeManager::getSystemTime() const {
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    struct tm local_time;
+    localtime_r(&time_t_now, &local_time);
+    return local_time;
 }
