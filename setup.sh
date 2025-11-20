@@ -36,5 +36,12 @@ sudo modprobe spi_bcm2835
 sudo modprobe mmc_spi
 ##NOTE: need to enable dtparam=i2c_arm=on in /boot/config.txt to configure I2C
 
+# ALSO: NEED TO MODIFY THE RASPI CONFIG TO ENABLE PWM ON PIN 18
+
+
+# for PILLBOX driver : need to use PWM
+sudo apt-get install libpigpiod-if-dev libpigpiod-if2-1t64
+sudo pigpiod
+
 
 ##NOTE2: PRE-SAVED CONFIGURATIONS UNDER 'CONFIG.JSON' in build/src
