@@ -1,0 +1,14 @@
+{
+    "alarm_time": "08:00",
+    "wifi_credentials": [
+        {
+            "ssid": "iPhone",
+            "password": "oneoneSeven"
+        }
+    ],
+    "alarm_configuration": {
+        "strobe" : true,
+        "pillbox" : true
+    },
+    "alarm_enabled" : true
+}
