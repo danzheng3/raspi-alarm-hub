@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 #include <filesystem>
 #include <algorithm>
@@ -9,7 +10,7 @@
 #include "events/EventBus.h"
 #include "events/Events.h"
 
-#define ALARM_RING_PATH "../../images/alarm_ring.mp3"
+#define ALARM_RING_PATH "../../images/alarm.mp3"
 
 struct Song {
     std::string title;
@@ -21,35 +22,47 @@ class audioManager {
     public:
         enum class AudioOutput { AUTO, JACK, BLUETOOTH };
         enum class AudioState { STOPPED, PLAYING, PAUSED };
+
         audioManager(connectivityManager* connMgr, EventBus* eventBus);
         // may need to add parameters, plus duplicate depending on when sd slot is added.
         ~audioManager();
 
-        std::vector<Song> getSongList();
-        void playSong(const Song& song);
+        std::vector<Song> getSongList() const { return songList; };
 
+        // PLAYBACK CTRL
+        void playSongAtIndex(size_t index);
         void stop();
         void pause();
         void resume();
+
+
+        // PLAYBACK MODE
         void setOutput(AudioOutput output);
         AudioState getState();
-        void setVolume(int volume); //0-100 percentage
+        void setVolume(int volume); // 0-100%
 
         void alarmRing();
-
-        // need functions for changing volume, and equalizer settings
-
 
     private:
         std::string runCommand(const std::string& command);
         connectivityManager* connMgr;
+        EventBus* m_eventBus;
+
+        // audio state
         AudioOutput currentOutput = AudioOutput::AUTO;
         AudioState currentState = AudioState::STOPPED;
         int currentVolume = 50; // default volume 50%
-        void scanForSongs();
+
+        // playlist state info
         std::vector<Song> songList;
+        size_t currentIndex=0;
+
         std::string jackSink = "default"; // need to set sink name
         std::string btSink = "bluetooth-default"; // need to set sink name!
+
+        //internal helper
+        void scanForSongs();
+        void playNextSong();
 
         // EVENT-HANDLERS
         void onAlarmTriggered(const AlarmTriggeredEvent& event);
@@ -59,8 +72,5 @@ class audioManager {
         void onSpeakerDocked(const SpeakerDockedEvent& event);
         void onSpeakerUndocked(const SpeakerUndockedEvent& event);
         void onBluetoothConnected(const BluetoothSpeakerConnectedEvent& event);
-
-        connectivityManager* connMgr;
-        EventBus* m_eventBus;
         
 };

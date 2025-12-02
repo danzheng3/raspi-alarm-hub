@@ -1,13 +1,9 @@
 #include "managers/audioManager.h"
 audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : connMgr(connMgr), m_eventBus(eventBus) {
-    int rmdir = system("rmdir /mnt/sdcard/audioDataTemp && mkdir /mnt/sdcard/audioDataTemp");
-    int mount_sd = system("sudo mount /dev/mmcblk1p1 /mnt/sdcard");
+    
 
-    if (rmdir != 0 || mount_sd != 0) {
-        // Handle error
-        std::cout << "error mounting sd card" << std::endl; 
-    }
-
+    system("mkdir -p /mnt/sdcard");
+    playQueue.clear();
     songList.clear();
     scanForSongs();
 
@@ -20,15 +16,14 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
         m_eventBus->subscribe<SpeakerUndockedEvent>(this, &audioManager::onSpeakerUndocked);
         m_eventBus->subscribe<BluetoothSpeakerConnectedEvent>(this, &audioManager::onBluetoothConnected);
     }
+
+    std::cout << "AudioManager initialized, " << songList.size() << " songs found." << std::endl;
 }
 
 audioManager::~audioManager() {
     system("sudo umount /mnt/sdcard");
 }
 
-std::vector<Song> audioManager::getSongList() {
-    return songList;
-}
 
 void audioManager::scanForSongs() {
     std::string directory = "/mnt/sdcard/";
@@ -50,17 +45,27 @@ void audioManager::scanForSongs() {
 
 void audioManager::playSong(const Song& song) {
     stop();
+
     if (song.filePath.empty()) {
         std::cout << "No song file path provided." << std::endl;
         return;
     }
-    std::string filepath = song.filePath;
-    std::string command = "mpg123 '" + filepath + "' &"; // NEED TO TEST FILEPATH
+    std::string escapedPath = song.filePath;
 
+    size_t pos = 0;
+    while ((pos = escapedPath.find("'", pos)) != std::string::npos) {
+        escapedPath.replace(pos, 1, "'\\''");
+        pos += 4;
+    }
+    
+    std::string command = "mpg123 -q '" + escapedPath + "' > /dev/null 2>&1 &";
     system(command.c_str());
+    
     currentState = AudioState::PLAYING;
-    std::cout << "playing song: " << song.title << std::endl;
+    std::cout << "Playing: " << song.title << std::endl;
 }
+
+
 
 void audioManager::pause() {
     if (currentState == AudioState::PLAYING) {

@@ -4,15 +4,13 @@
 timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module, EventBus* eventBus) 
     : storage(storage), shared_rtc(rtc_module), m_eventBus(eventBus) {
     //currentTime = storage.getRTCTime();
-    syncFromRTC();
-
-    
-    if (currentTime.empty()) {
-        currentTime = "12:00"; // none from rtc
-        std::cout << "initialized timeManager with time " << currentTime << ". not from rtc" << std::endl;
+    if (!syncFromRTC()) {
+        std::cerr << "error syncing time from rtc during timeManager init" << std::endl;
     }
 
-    lastPublishedTime = getCurrentTime();
+
+    lastPublishedTime = getFormattedTime();
+    std::cout << "timeManager initialized, current time: " << lastPublishedTime << std::endl;
 }
 
 timeManager::~timeManager() {
@@ -20,90 +18,67 @@ timeManager::~timeManager() {
 }
 
 
-std::string timeManager::getCurrentTime() const {
-    struct tm local_time = getSystemTime();
-    char buffer[6];
-    strftime(buffer, sizeof(buffer), "%H:%M", &local_time);
-    return std::string(buffer);
-}
 
-void timeManager::setTime(const std::string& time) {
-    currentTime = time;
-    std::string command = "sudo date -s '" + time + ":00'";
-    int result = system(command.c_str());
-    if (result==0) {
-        std::cout << "Time set to " << currentTime << std::endl;
-    } else {
-        std::cout << "time set fail";
-    }
-
-    std::cout << "saving time to rtc" << std::endl;
-    updateRTC();
-}
-
-void timeManager::syncFromRTC() {
-    // READ FROM RTC
-    RTC_Time rtcTime;
-    if (!(shared_rtc->getTime(rtcTime))) {
-        std::cout << "error reading rtc time in sync" << std::endl; 
-        return;
-    }
-    /* 
-    char buffer[9];
-    snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", currTime.hours, currTime.minutes, currTime.seconds); // NEED TO FIX TIME SYNC
-    std::string adj_time = std::string(buffer);
-    adj_time = adj_time.substr(0,5); // HH:MM
-    currentTime = std::string(buffer); // NEED TO FIX LATER FOR RTC LOGIC
-    */
-
-    struct tm timeinfo = {}; // convert RTC time to system time
-    timeinfo.tm_hour = rtcTime.hours;
-    timeinfo.tm_min = rtcTime.minutes;
-    timeinfo.tm_sec = rtcTime.seconds;
-    timeinfo.tm_mday = rtcTime.day;
-    timeinfo.tm_mon = rtcTime.month-1;
-    timeinfo.tm_year = rtcTime.year+100;
-    timeinfo.tm_wday = rtcTime.dayOfWeek;
-    timeinfo.tm_isdst =-1;
-    
-    time_t new_time = mktime(&timeinfo);
-
-    struct timeval tv;
-    tv.tv_sec = new_time;
-    tv.tv_usec = 0;
-
-    if(settimeofday(&tv, nullptr) == 0) {
-        std::cout << "system time synced from rtc: " << getCurrentTime() << std::endl;
+void timeManager::setTime(const struct tm& time) {
+    if (setSystemTime(time)) {
+        std::cout << "system time set to: " << getFormattedTime() << std::endl;
+        updateRTC();
 
         if (m_eventBus) {
             TimeUpdatedEvent event;
-            event.currentTime = getCurrentTime();
+            event.currentTime = getFormattedTime();
             m_eventBus->publish(event);
+            lastPublishedTime = event.currentTime;
         }
     } else {
-        std::cerr << "error: failed to set sys time in timeManager" << std::endl;
+        std::cerr << "error setting system time" << std::endl;
+    }
+}
+
+bool timeManager::syncFromRTC() {
+    // READ FROM RTC
+    if (!shared_rtc) {
+        std::cerr << "error: no rtc module in timeManager sync" << std::endl;
+        return false;
+    }
+    RTC_Time rtcTime;
+    if (!(shared_rtc->getTime(rtcTime))) {
+        std::cout << "error reading rtc time in sync" << std::endl; 
+        return false;
     }
 
-    std::cout << "Time synchronized from RTC: " << currentTime << std::endl;
+    if (rtcTime.year == 0 && rtcTime.month == 0 && rtcTime.day == 0) {
+        std::cerr << "rtc time not set, skipping sync" << std::endl;
+        return false;
+    }
+
+    struct tm time = rtcToTm(rtcTime);
+
+    if (setSystemTime(time)) {
+        std::cout << "system time synced from rtc: " << getFormattedTime() << std::endl;
+
+        if (m_eventBus) {
+            TimeUpdatedEvent event;
+            event.currentTime = getFormattedTime();
+            m_eventBus->publish(event);
+        }
+
+        return true;
+    } else {
+        std::cerr << "error setting system time from rtc" << std::endl;
+        return false;
+    }
 
 }
 
 void timeManager::updateRTC() {
-    struct tm local_time = getSystemTime();
-    
-    RTC_Time rtcTime;
-    rtcTime.hours = local_time.tm_hour;
-    rtcTime.minutes = local_time.tm_min;
-    rtcTime.seconds = local_time.tm_sec;
-    rtcTime.day = local_time.tm_mday;
-    rtcTime.month = local_time.tm_mon + 1; // RTC expects 1-12
-    rtcTime.year = local_time.tm_year - 100; // RTC stores years since 2000
-    rtcTime.dayOfWeek = local_time.tm_wday;
-    
+    struct tm time = getSystemTime();
+    RTC_Time rtcTime = tmToRtc(time);
+
     if (shared_rtc->setTime(rtcTime)) {
-        std::cout << "RTC updated from system time: " << getCurrentTime() << std::endl;
+        std::cout << "rtc time updated from system time" << std::endl;
     } else {
-        std::cerr << "Error: Failed to update RTC" << std::endl;
+        std::cerr << "error updating rtc time from system time" << std::endl;
     }
 }
 
@@ -113,4 +88,48 @@ struct tm timeManager::getSystemTime() const {
     struct tm local_time;
     localtime_r(&time_t_now, &local_time);
     return local_time;
+}
+
+struct tm timeManager::getCurrentTime() const {
+    return getSystemTime();
+}
+
+void timeManager::checkAndPublishTimeUpdate() {
+    std::string currentTime = getFormattedTime();
+    if (currentTime != lastPublishedTime) {
+        lastPublishedTime = currentTime;
+        if (m_eventBus) {
+            TimeUpdatedEvent event;
+            event.currentTime = currentTime;
+            m_eventBus->publish(event);
+        }
+    }
+}
+
+
+// struct to convert between tm and RTC_Time
+
+RTC_Time timeManager::tmToRtc(const struct tm& time) const {
+    RTC_Time rtcTime;
+    rtcTime.seconds = time.tm_sec;
+    rtcTime.minutes = time.tm_min;
+    rtcTime.hours = time.tm_hour;
+    rtcTime.day = time.tm_mday;
+    rtcTime.month = time.tm_mon + 1;        // RTC expects 1-12
+    rtcTime.year = time.tm_year - 100;      // RTC stores years since 2000
+    rtcTime.dayOfWeek = time.tm_wday;
+    return rtcTime;
+}
+
+struct tm timeManager::rtcToTm(const RTC_Time& rtcTime) const {
+    struct tm time = {};
+    time.tm_sec = rtcTime.seconds;
+    time.tm_min = rtcTime.minutes;
+    time.tm_hour = rtcTime.hours;
+    time.tm_mday = rtcTime.day;
+    time.tm_mon = rtcTime.month - 1;        // tm_mon is 0-11
+    time.tm_year = rtcTime.year + 100;      // tm_year is years since 1900
+    time.tm_wday = rtcTime.dayOfWeek;
+    time.tm_isdst = -1;
+    return time;
 }

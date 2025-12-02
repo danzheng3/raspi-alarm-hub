@@ -46,6 +46,11 @@ DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, con
         m_eventBus->subscribe<WifiStatusChangedEvent>(this, &DisplayManager::onWifiStatusChanged);
         m_eventBus->subscribe<WeatherUpdatedEvent>(this, &DisplayManager::onWeatherUpdated);
     }
+
+    if (timeMgr) {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        m_currentTime = timeMgr->getCurrentTime();
+    }
     changePage(PageType::MAIN);
 
 }
@@ -116,39 +121,40 @@ void DisplayManager::run(std::atomic<bool>& running) {
 
 void DisplayManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
     std::cout << "displaymanager: alarm triggered, show UI" << std::endl;
-    m_isAlarmActive = true;
+    setState(m_isAlarmActive, true);
 
     // change UI, trigger
 }
 
 void DisplayManager::onAlarmCleared(const AlarmClearedEvent& event) {
     std::cout << "Displaymanager: alarm cleared, returning to normal UI" << std::endl;
-    m_isAlarmActive = false;
+    setState(m_isAlarmActive, false);
 }
 
 void DisplayManager::onAlarmSet(const AlarmSetEvent& event) {
     std::cout << "Displaymanager: alarm set to " << event.newTime << std::endl;
-    m_alarmTime = event.newTime;
+    setState(m_alarmTime, event.newTime);
 
     //update display
 }
 
 void DisplayManager::onTimeUpdated(const TimeUpdatedEvent& event) {
-    m_currentTime = event.currentTime;
+    setState(m_currentTime, event.currentTime);
 }
 
 void DisplayManager::onWifiStatusChanged(const WifiStatusChangedEvent& event) {
     std::cout << "DisplayManager: WiFi status changed: " 
               << (event.isConnected ? "Connected" : "Disconnected") << std::endl;
-    m_isWifiConnected = event.isConnected;
+    setState(m_isWifiConnected, event.isConnected);
     // Update WiFi icon in UI
 }
 
 void DisplayManager::onWeatherUpdated(const WeatherUpdatedEvent& event) {
     std::cout << "DisplayManager: Weather updated: " << event.temperature 
               << "°, " << event.condition << std::endl;
-    m_temperature = event.temperature;
-    m_weatherCondition = event.condition;
+    std::lock_guard<std::mutex> lock(stateMutex);
+    setState(m_temperature, event.temperature);
+    setState(m_weatherCondition, event.condition);
     // Update weather display
 }
 

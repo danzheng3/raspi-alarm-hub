@@ -6,6 +6,7 @@
 #include "display_manager.h"
 #include "audioManager.h"
 #include "events/EventBus.h"
+#include "weatherManager.h"
 
 #include <thread>
 #include <chrono>
@@ -28,45 +29,67 @@ int main() {
     auto rtc = std::make_shared<MCP7940N>(bus);
 
     timeManager timeMgr(storage, rtc, &eventBus);
-    
+    std::cout << "TimeMgr: " << timeMgr.getFormattedTime() << std::endl;
+
     alarmManager alarmMgr(storage, timeMgr, &eventBus);
-    std::cout << "alarmMgr initialized" << std::endl;
+    if (alarmMgr.isAlarmEnabled()) {
+        std::cout << "Alarm: " << alarmMgr.getAlarmTime() << std::endl;
+    } else {
+        std::cout << "Alarm: Not set" << std::endl;
+    }
+
     WifiAdapter wifiAdapter;
-    std::cout << "wifiMgr initialized" << std::endl;
     BluetoothAdapter btAdapter;
     std::cout << "btMgr initialized" << std::endl;
     connectivityManager connMgr(wifiAdapter, btAdapter, storage, &eventBus);
     std::cout << "connMgr initialized" << std::endl;
+    std::cout << "WiFi: " << (connMgr.isWifiConnected() ? "Connected" : "Disconnected") << std::endl;
+
 
     audioManager audioMgr(&connMgr, &eventBus);
-    std::cout << "audioMgr initialized" << std::endl;
-    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &eventBus);
+    std::cout << "Audio: " << audioMgr.getSongList().size() << " songs" << std::endl;
 
-    std::cout << "=== Initialization Complete ===" << std::endl;
-    std::cout << "Initial time: " << timeMgr.getCurrentTime() << std::endl;
-    std::cout << "Alarm enabled: " << (alarmMgr.isAlarmEnabled() ? "Yes" : "No") << std::endl;
-    std::cout << "WiFi connected: " << (connMgr.isWifiConnected() ? "Yes" : "No") << std::endl;
-    std::cout << "===============================" << std::endl;
+    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &eventBus);
+    std::cout << "DisplayManager initialized" << std::endl;
+
+    weatherManager weatherMgr(storage, &eventBus);
+    std::cout << "Weather initialized" << std::endl;
+    weatherMgr.startAutoUpdate(30);
+
+    std::thread([&weatherMgr]() {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        weatherMgr.fetchWeather(40.4237, -86.9212);
+    }).detach();
+
+    std::cout << "========================================" << std::endl;
+    std::cout << "System ready!" << std::endl;
+    std::cout << "========================================\n" << std::endl;
 
     return 0;
     // finish for now
 
     std::thread logicThread([&]() {
         while (running) {
-            std::string currentTime = timeMgr.getCurrentTime();
-            if (alarmMgr.isAlarmEnabled() && alarmMgr.shouldTrigger()) {
-                std::cout << "Alarm Triggered at " << timeMgr.getCurrentTime() << "!" << std::endl;
+            timeMgr.checkAndPublishTimeUpdate();
+            
+            // Check if alarm should trigger
+            if (alarmMgr.shouldTrigger()) {
+                std::cout << "\n🔔 ALARM! 🔔\n" << std::endl;
                 alarmMgr.resetTrigger();
             }
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
 
     displayMgr.run(running);
     running = false;
-    logicThread.join();
-    std::cout << "Shutting down..." << std::endl;
-
-
+    weatherMgr.stopAutoUpdate();
+    
+    if (logicThread.joinable()) {
+        logicThread.join();
+    }
+    
+    std::cout << "Goodbye!" << std::endl;
     return 0;
 }
