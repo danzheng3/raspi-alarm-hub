@@ -9,7 +9,7 @@ MainPage::MainPage(timeManager* timeMgr, alarmManager* alarmMgr, connectivityMan
     smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36);
     
     if (timeMgr) {
-        std::string currentTime = timeMgr->getCurrentTime();
+        std::string currentTime = timeMgr->getFormattedTime();
         // Parse HH:MM format
         size_t colonPos = currentTime.find(':');
         if (colonPos != std::string::npos) {

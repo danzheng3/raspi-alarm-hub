@@ -7,6 +7,7 @@
 #include "audioManager.h"
 #include "events/EventBus.h"
 #include "weatherManager.h"
+#include "powerManager.h"
 
 #include <thread>
 #include <chrono>
@@ -27,6 +28,7 @@ int main() {
 
     auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
     auto rtc = std::make_shared<MCP7940N>(bus);
+    auto adc = std::make_shared<MCP3021>(bus); 
 
     timeManager timeMgr(storage, rtc, &eventBus);
     std::cout << "TimeMgr: " << timeMgr.getFormattedTime() << std::endl;
@@ -51,6 +53,11 @@ int main() {
 
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &eventBus);
     std::cout << "DisplayManager initialized" << std::endl;
+
+    powerManager pwrMgr(adc, &eventBus);
+    pwrMgr.enableAutoBrightness(true);
+    pwrMgr.startMonitoring();
+    std::cout << "Power management initialized" << std::endl;
 
     weatherManager weatherMgr(storage, &eventBus);
     std::cout << "Weather initialized" << std::endl;

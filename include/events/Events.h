@@ -16,8 +16,15 @@ struct AlarmClearedEvent {};
 // UI/INPUT events
 
 struct UIStopAlarmPressedEvent{};
-struct UIPlaySongPressedEvent{};
 struct UIVolumeChanged{ int newVolume; };
+struct UISongSelectedEvent {
+    size_t songIndex;
+};
+struct UIEqualizerBandChanged {
+    int bandIndex;      // 0-6
+    uint8_t value;      // 0-255
+};
+
  
 //Hardware/Connectivity
 
@@ -40,3 +47,6 @@ struct WeatherUpdatedEvent {
 };
 
 
+struct ScreenBrightnessChanged {
+    int brightness;  // 0-100
+};

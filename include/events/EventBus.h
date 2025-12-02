@@ -21,7 +21,7 @@ class EventBus {
         auto type = std::type_index(typeid(T));
 
         // wrapper for both subscriber and callback
-        auto wrapper = [subscriber, callback](std::any event) {
+        auto wrapper = [subscriber, callback, type](std::any event) {
             try {
                 const T& typedEvent = std::any_cast<const T&>(event);
                 (subscriber->*callback)(typedEvent);

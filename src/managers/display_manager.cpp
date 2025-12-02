@@ -6,7 +6,8 @@
 #include <SDL2/SDL_image.h>
 
 
-DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr, EventBus* eventBus)
+DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
+                                connectivityManager* connMgr, powerManager* pwrMgr, EventBus* eventBus)
     : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), window(nullptr), renderer(nullptr), font(nullptr), weatherIcon(nullptr), currentPage(nullptr), m_eventBus(eventBus)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0) {
@@ -45,11 +46,13 @@ DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, con
         m_eventBus->subscribe<TimeUpdatedEvent>(this, &DisplayManager::onTimeUpdated);
         m_eventBus->subscribe<WifiStatusChangedEvent>(this, &DisplayManager::onWifiStatusChanged);
         m_eventBus->subscribe<WeatherUpdatedEvent>(this, &DisplayManager::onWeatherUpdated);
+        m_eventBus->subscribe<ScreenBrightnessChanged>(this, &DisplayManager::onBrightnessChanged);
+
     }
 
     if (timeMgr) {
         std::lock_guard<std::mutex> lock(stateMutex);
-        m_currentTime = timeMgr->getCurrentTime();
+        m_currentTime = timeMgr->getFormattedTime();
     }
     changePage(PageType::MAIN);
 
@@ -97,12 +100,17 @@ void DisplayManager::changePage(PageType newPage) {
 
 void DisplayManager::run(std::atomic<bool>& running) {
     SDL_Event event;
+    Uint32 lastUpdateTime = SDL_GetTicks();
+    const Uint32 updateInterval = 1000; // update every second
 
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
-            } else if (event.type == SDL_FINGERDOWN) {
+            } else if (event.type == SDL_FINGERDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
+                if (pwrMgr) {
+                    pwrMgr->registerActivity();
+                }
                 std::cout << "Touch detected at (" << event.tfinger.x << ", " << event.tfinger.y << ")" << std::endl;
             } else if (currentPage) {
                 currentPage->handleEvent(event);
@@ -158,5 +166,8 @@ void DisplayManager::onWeatherUpdated(const WeatherUpdatedEvent& event) {
     // Update weather display
 }
 
-
+void DisplayManager::onBrightnessChanged(const ScreenBrightnessChanged& event) {
+    std::cout << "DisplayManager: Brightness changed to " << event.brightness << "%" << std::endl;
+    //setState(m_screenBrightness, event.brightness);
+}
 

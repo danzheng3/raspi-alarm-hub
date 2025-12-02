@@ -3,14 +3,12 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
     
 
     system("mkdir -p /mnt/sdcard");
-    playQueue.clear();
-    songList.clear();
     scanForSongs();
 
     if (m_eventBus) {
         m_eventBus->subscribe<AlarmTriggeredEvent>(this, &audioManager::onAlarmTriggered);
         m_eventBus->subscribe<AlarmClearedEvent>(this, &audioManager::onAlarmCleared);
-        m_eventBus->subscribe<UIPlaySongPressedEvent>(this, &audioManager::onUIPlaySongPressed);
+        m_eventBus->subscribe<UISongSelectedEvent>(this, &audioManager::onSongSelected);
         m_eventBus->subscribe<UIVolumeChanged>(this, &audioManager::onUIVolumeChanged);
         m_eventBus->subscribe<SpeakerDockedEvent>(this, &audioManager::onSpeakerDocked);
         m_eventBus->subscribe<SpeakerUndockedEvent>(this, &audioManager::onSpeakerUndocked);
@@ -21,12 +19,18 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
 }
 
 audioManager::~audioManager() {
-    system("sudo umount /mnt/sdcard");
+    stop();
 }
 
 
 void audioManager::scanForSongs() {
+    songList.clear();
     std::string directory = "/mnt/sdcard/";
+
+    if (!std::filesystem::exists(directory)) {
+        std::cerr << "SD card not mounted at " << directory << std::endl;
+        return;
+    }
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(directory)) {
         if (entry.is_regular_file()) {
@@ -34,7 +38,7 @@ void audioManager::scanForSongs() {
             if (entry.path().extension() == ".mp3" || entry.path().extension() == ".wav") {
                 Song song;
                 song.title = entry.path().stem().string(); // use title
-                song.artist = "Unknown Artist"; // hmm other way to get artist
+                song.artist = "Unknown"; // hmm other way to get artist
                 song.filePath = filePath;
                 songList.push_back(song);
                 std::cout << "found song: " << song.title << std::endl;
@@ -43,33 +47,71 @@ void audioManager::scanForSongs() {
     }
 }
 
-void audioManager::playSong(const Song& song) {
-    stop();
+void audioManager::onSongSelected(const UISongSelectedEvent& event) {
+    std::cout << "Song selected: index " << event.songIndex << std::endl;
+    playSongAtIndex(event.songIndex);
+}
 
-    if (song.filePath.empty()) {
-        std::cout << "No song file path provided." << std::endl;
+void audioManager::playSongAtIndex(size_t index) {
+    if (index >= songList.size()) {
+        std::cerr << "Invalid song index" << std::endl;
         return;
     }
+    
+    stop();
+    currentIndex = index;
+    
+    const Song& song = songList[index];
+    
+    // Escape single quotes in path
     std::string escapedPath = song.filePath;
-
     size_t pos = 0;
     while ((pos = escapedPath.find("'", pos)) != std::string::npos) {
         escapedPath.replace(pos, 1, "'\\''");
         pos += 4;
     }
     
-    std::string command = "mpg123 -q '" + escapedPath + "' > /dev/null 2>&1 &";
+    // Play song and automatically continue to next when finished
+    std::string command = "(mpg123 -q '" + escapedPath + "' && echo 'SONG_FINISHED') > /tmp/mpg123.log 2>&1 &";
     system(command.c_str());
     
     currentState = AudioState::PLAYING;
     std::cout << "Playing: " << song.title << std::endl;
+    
+    // Start background thread to monitor song completion
+    std::thread([this]() {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        
+        while (currentState == AudioState::PLAYING) {
+            // Check if mpg123 is still running
+            std::string result = runCommand("pgrep mpg123");
+            if (result.empty()) {
+                // Song finished, play next
+                playNextSong();
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }).detach();
 }
 
+void audioManager::playNextSong() {
+    if (currentState == AudioState::STOPPED) return;
+    
+    currentIndex++;
+    if (currentIndex >= songList.size()) {
+        std::cout << "End of playlist" << std::endl;
+        stop();
+        return;
+    }
+    
+    playSongAtIndex(currentIndex);
+}
 
 
 void audioManager::pause() {
     if (currentState == AudioState::PLAYING) {
-        std::string command = "kill -STOP $(pidof mpg123)";
+        std::string command = "killall -STOP mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::PAUSED;
         std::cout << "audio paused" << std::endl;
@@ -78,7 +120,7 @@ void audioManager::pause() {
 
 void audioManager::resume() {
     if (currentState == AudioState::PAUSED) {
-        std::string command = "kill -CONT $(pidof mpg123)";
+        std::string command = "killall -CONT mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::PLAYING;
         std::cout << "audio resumed" << std::endl;
@@ -87,30 +129,36 @@ void audioManager::resume() {
 
 void audioManager::stop() {
     if (currentState != AudioState::STOPPED) {
-        std::string command = "killall mpg123";
+        std::string command = "killall -9 mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::STOPPED;
         std::cout << "audio stopped" << std::endl;
     }
 }
 
-void audioManager::setOutput(AudioOutput output) {
+void audioManager::setOutput(AudioOutput output) { // NEED TO TEST THIS
     std::string sinkToSet = jackSink;
     bool btConnected = connMgr->isBluetoothConnected() && connMgr;
 
     if (output == AudioOutput::BLUETOOTH && btConnected) {
-        // need logic hear to set sink to btSink using MAC ADDRESS / etc.
-        // need to TEST THIS
-    } else if (output == AudioOutput::AUTO) {
-        if (btConnected) {
+        std::string result = runCommand("pactl list short sinks | grep bluez");
+        if (!result.empty()) {
+            std::istringstream iss(result);
+            iss >> btSink;
             sinkToSet = btSink;
         }
-    } else if (output == AudioOutput::JACK) {
-        sinkToSet = jackSink;
+    } else if (output == AudioOutput::AUTO) {
+        if (btConnected) {
+            std::string result = runCommand("pactl list short sinks | grep bluez");
+            if (!result.empty()) {
+                std::istringstream iss(result);
+                iss >> btSink;
+                sinkToSet = btSink;
+            }
+        }
     }
 
     std::string command = "pactl set-default-sink " + sinkToSet;
-    std::cout << "setting audio output: " << sinkToSet << std::endl;
     system(command.c_str());
     currentOutput = output;
 }
@@ -126,12 +174,12 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
 
 void audioManager::alarmRing() {
     stop();
-    std::string command = "mpg123 --loop -1 '" + std::string(ALARM_RING_PATH) + "' &"; // NEED TO TEST FILEPATH
+    std::string command = "mpg123 -q --loop -1 '" + std::string(ALARM_RING_PATH) + "' > /dev/null 2>&1 &";
     setVolume(100); // max volume for alarm
 
     system(command.c_str());
     currentState = AudioState::PLAYING;
-    std::cout << "alarm ringing!" << std::endl;
+    std::cout << "audioManager: alarm ringing" << std::endl;
 }
 
 // event handlers
@@ -144,16 +192,11 @@ void audioManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
 void audioManager::onAlarmCleared(const AlarmClearedEvent& event) {
     std::cout << "audioManager: alarm cleared" << std::endl;
     stop();
+    setVolume(50);
     //setVolume to previous
 }
 
-void audioManager::onUIPlaySongPressed(const UIPlaySongPressedEvent& event) {
-    std::cout << "audioManager: play song button pressed" << std::endl;
 
-    if (!songList.empty()) {
-        playSong(songList[0]); // need to update logic here
-    }
-}
 
 void audioManager::onUIVolumeChanged(const UIVolumeChanged& event) {
     std::cout << "audioManager: Volume changed to " << event.newVolume << std::endl;

@@ -5,6 +5,9 @@ add_library(managers
     timeManager.cpp
     connectivityManager.cpp
     audioManager.cpp
+    equalizerManager.cpp
+    weatherManager.cpp
+    powerManager.cpp
 )
 
 target_include_directories(managers PUBLIC ${PROJECT_SOURCE_DIR}/include)

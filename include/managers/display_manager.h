@@ -10,6 +10,7 @@
 #include "events/EventBus.h"
 #include "events/Events.h"
 
+
 enum class PageType {
     MAIN,
     SETTINGS,
@@ -20,7 +21,7 @@ enum class PageType {
 class DisplayManager {
     public:
         DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
-                        connectivityManager* connMgr, EventBus* eventBus);
+                        connectivityManager* connMgr, powerManager* pwrMgr, EventBus* eventBus);
         ~DisplayManager();
 
         void run(std::atomic<bool>& running);
@@ -35,6 +36,7 @@ class DisplayManager {
         void onWifiStatusChanged(const WifiStatusChangedEvent& event);
         void onWeatherUpdated(const WeatherUpdatedEvent& event);
         void onAlarmSet(const AlarmSetEvent& event);
+        void onBrightnessChanged(const ScreenBrightnessChanged& event);
 
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
@@ -49,6 +51,7 @@ class DisplayManager {
         alarmManager* alarmMgr;
         connectivityManager* connMgr;
         EventBus* m_eventBus;
+        powerManager* pwrMgr;
 
         //event States. thread-safe
         std::mutex stateMutex;

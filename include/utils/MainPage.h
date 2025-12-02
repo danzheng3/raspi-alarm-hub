@@ -2,6 +2,8 @@
 #include "managers/timeManager.h"
 #include "managers/alarmManager.h"
 #include "managers/connectivityManager.h"
+#include "managers/powerManager.h"
+#pragma once
 #include <SDL2/SDL_ttf.h>
 
 

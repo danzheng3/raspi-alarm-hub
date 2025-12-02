@@ -67,7 +67,7 @@ class audioManager {
         // EVENT-HANDLERS
         void onAlarmTriggered(const AlarmTriggeredEvent& event);
         void onAlarmCleared(const AlarmClearedEvent& event);
-        void onUIPlaySongPressed(const UIPlaySongPressedEvent& event);
+        void onSongSelected(const UISongSelectedEvent& event);
         void onUIVolumeChanged(const UIVolumeChanged& event);
         void onSpeakerDocked(const SpeakerDockedEvent& event);
         void onSpeakerUndocked(const SpeakerUndockedEvent& event);
