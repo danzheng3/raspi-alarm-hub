@@ -1,14 +1,24 @@
 {
-    "alarm_time": "08:00",
-    "wifi_credentials": [
-        {
-            "ssid": "iPhone",
-            "password": "oneoneSeven"
-        }
-    ],
-    "alarm_configuration": {
-        "strobe" : true,
-        "pillbox" : true
-    },
-    "alarm_enabled" : true
+  "alarm_time": "07:00",
+  "rtc_time": "12:00",
+  "wifi_credentials": [
+    {
+      "ssid": "iPhone",
+      "password": "oneoneSeven"
+    }
+  ],
+  "alarm_actions": {
+    "sound": true,
+    "led": true,
+    "strobe": false,
+    "pillbox": true,
+    "led_day": 1
+  },
+  "weather_latitude": "40.4167",
+  "weather_longitude": "-86.8753",
+  "audio_settings": {
+    "default_volume": 50,
+    "alarm_volume": 100,
+    "play_mode": "normal"
+  }
 }

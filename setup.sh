@@ -20,6 +20,8 @@ sudo modprobe i2c-dev
 sudo apt install i2c-tools
 sudo apt install libgpiod-dev
 
+## NOTE: NEED TO USE LIBGPIOD VERSION 1.X NOT 2.X
+
 #saving to json
 sudo apt install nlohmann-json3-dev
 
