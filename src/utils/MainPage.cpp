@@ -38,7 +38,7 @@ void MainPage::render(SDL_Renderer* renderer) {
     renderText(renderer, wifiStatus, 50, 50, black, smallFont);
 
     // Display current time
-    std::string currentTime = timeMgr ? timeMgr->getCurrentTime() : "--:--";
+    std::string currentTimeStr = timeMgr ? timeMgr->getFormattedTime() : "--:--";    
     int centerX = 720 / 2 - 150;
     int centerY = 1280 / 2 - 80;
     
@@ -46,7 +46,7 @@ void MainPage::render(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
     SDL_RenderDrawRect(renderer, &timeDisplayRect);
     
-    renderText(renderer, currentTime, centerX, centerY, black, font);
+    renderText(renderer, currentTimeStr, centerX, centerY, black, font);
 
     // Display alarm time
     std::string alarmTime = alarmMgr ? (alarmMgr->isAlarmEnabled() ? alarmMgr->getAlarmTime() : "None") : "None";
@@ -86,7 +86,7 @@ void MainPage::handleEvent(const SDL_Event& e) {
         if (currentMode == AdjustmentMode::NONE) {
             if (isPointInRect(touchX, touchY, timeDisplayRect)) {
                 currentMode = AdjustmentMode::ADJUST_TIME;
-                std::string currentTime = timeMgr->getCurrentTime();
+                std::string currentTime = timeMgr->getFormattedTime();
                 sscanf(currentTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
             } else if (isPointInRect(touchX, touchY, alarmDisplayRect)) {
                 currentMode = AdjustmentMode::ADJUST_ALARM;
@@ -113,7 +113,11 @@ void MainPage::handleEvent(const SDL_Event& e) {
                 
                 if (currentMode == AdjustmentMode::ADJUST_TIME) {
                     if (timeMgr) {
-                        timeMgr->setTime(oss.str());
+                        struct tm timeToSet = timeMgr->getCurrentTime();
+                        timeToSet.tm_hour = adjustedHour;
+                        timeToSet.tm_min = adjustedMinute;
+                        timeToSet.tm_sec = 0;
+                        timeMgr->setTime(timeToSet);
                     }
                 } else if (currentMode == AdjustmentMode::ADJUST_ALARM) {
                     if (alarmMgr) {
@@ -249,6 +253,4 @@ SDL_Rect MainPage::renderLabeledBox(SDL_Renderer* renderer,
     if (!surface) return {x,y,0,0};
 
     
-
-
 }

@@ -126,15 +126,6 @@ bool alarmManager::shouldTrigger() {
     return false;
 }
 
-void alarmManager::onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event) {
-    std::cout << "alarmManager: stop alarm button pressed" << std::endl;
-    alarmTriggered = false;
-
-    if (m_eventBus) {
-        AlarmClearedEvent clearEvent;
-        m_eventBus->publish(clearEvent);
-    }
-}
 
 void alarmManager::triggerAlarmActions() {
     std::cout << "Triggering alarm actions:" << std::endl;

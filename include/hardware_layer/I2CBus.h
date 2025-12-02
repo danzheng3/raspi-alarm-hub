@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
+#pragma once
 
 class I2CBus {
     public:

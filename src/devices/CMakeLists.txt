@@ -7,6 +7,7 @@ add_library(devices
     sdCard.cpp
     LED.cpp
 )
+find_library(PIGPIO_LIB pigpio)
 
 target_include_directories(devices PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(devices PUBLIC utils)
+target_link_libraries(devices PUBLIC utils ${PIGPIO_LIB})

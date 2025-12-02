@@ -17,7 +17,7 @@ class timeManager {
         // get current system time
 
         struct tm getCurrentTime() const;
-        std::string getFormattedTime(const char* format = "%H:%M:%S") const;
+        std::string getFormattedTime(const char* format = "%H:%M") const;
         std::string getFormattedDate(const char* format = "%Y-%m-%d") const;
 
         void setTime(const struct tm& time);

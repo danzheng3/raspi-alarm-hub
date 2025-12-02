@@ -10,6 +10,8 @@
 #include "events/EventBus.h"
 #include "events/Events.h"
 
+#include "managers/powerManager.h"
+
 
 enum class PageType {
     MAIN,

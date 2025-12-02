@@ -85,7 +85,7 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
         auto current = json["current_weather"];
 
         currentWeather.temperature = current["temperature"].get<double>();
-        currentWeather.weatherCode = current["weathercode"].get<int>();
+        //currentWeather.weatherCode = current["weathercode"].get<int>();
         currentWeather.condition = weatherCodeToString(currentWeather.weatherCode);
         currentWeather.humidity = current["relative_humidity_2m"].get<int>();
         currentWeather.windSpeed = current["wind_speed_10m"].get<double>();
@@ -137,8 +137,9 @@ void weatherManager::stopAutoUpdate() {
 
 // weather opcode info
 
-std::string weatherCodeToString(WeatherCode code) {
-    switch (code) {
+std::string weatherManager::weatherCodeToString(int code) const {
+    WeatherCode wCode = static_cast<WeatherCode>(code);
+    switch (wCode) {
         case WeatherCode::CLEAR_SKY:
             return "CLEAR_SKY";
         case WeatherCode::MAINLY_CLEAR:

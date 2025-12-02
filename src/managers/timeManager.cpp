@@ -17,6 +17,16 @@ timeManager::~timeManager() {
     updateRTC();
 }
 
+bool timeManager::setSystemTime(const struct tm& time) {
+    time_t new_time = mktime(const_cast<struct tm*>(&time));
+    
+    struct timeval tv;
+    tv.tv_sec = new_time;
+    tv.tv_usec = 0;
+    
+    return settimeofday(&tv, nullptr) == 0;
+}
+
 
 
 void timeManager::setTime(const struct tm& time) {
@@ -132,4 +142,11 @@ struct tm timeManager::rtcToTm(const RTC_Time& rtcTime) const {
     time.tm_wday = rtcTime.dayOfWeek;
     time.tm_isdst = -1;
     return time;
+}
+
+std::string timeManager::getFormattedTime(const char* format) const {
+    struct tm time = getSystemTime();
+    char buffer[64];
+    strftime(buffer, sizeof(buffer), format, &time);
+    return std::string(buffer);
 }

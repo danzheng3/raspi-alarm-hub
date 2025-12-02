@@ -221,6 +221,19 @@ void audioManager::onBluetoothConnected(const BluetoothSpeakerConnectedEvent& ev
     }
 }
 
+std::string audioManager::runCommand(const std::string& command) {
+    std::array<char, 128> buffer;
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "ERROR";
+    
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
+    }
+    pclose(pipe);
+    return result;
+}
+
 
 
 /*

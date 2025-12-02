@@ -3,11 +3,12 @@
 #include "connectivityManager.h"
 #include "timeManager.h"
 #include "storageManager.h"
+#include "powerManager.h"
 #include "display_manager.h"
 #include "audioManager.h"
 #include "events/EventBus.h"
 #include "weatherManager.h"
-#include "powerManager.h"
+
 
 #include <thread>
 #include <chrono>
@@ -51,13 +52,14 @@ int main() {
     audioManager audioMgr(&connMgr, &eventBus);
     std::cout << "Audio: " << audioMgr.getSongList().size() << " songs" << std::endl;
 
-    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &eventBus);
-    std::cout << "DisplayManager initialized" << std::endl;
-
     powerManager pwrMgr(adc, &eventBus);
     pwrMgr.enableAutoBrightness(true);
     pwrMgr.startMonitoring();
     std::cout << "Power management initialized" << std::endl;
+
+
+    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &eventBus);
+    std::cout << "DisplayManager initialized" << std::endl;
 
     weatherManager weatherMgr(storage, &eventBus);
     std::cout << "Weather initialized" << std::endl;

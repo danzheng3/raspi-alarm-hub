@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 
+namespace fs = std::filesystem;
 
 // NOTE: MUST ADD TO DTOVERLAY / BOOT FOR SD CARD KERNEL HANDLING
 sdCard::sdCard(std::string mountPoint) : rootPath(mountPoint) {
@@ -18,7 +19,6 @@ sdCard::sdCard(std::string mountPoint) : rootPath(mountPoint) {
 
 sdCard::~sdCard() {}
 
-namespace fs = std::filesystem;
 
 bool sdCard::readData() {
     audioData.clear();
