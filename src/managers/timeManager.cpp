@@ -5,7 +5,7 @@ timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_
     : storage(storage), shared_rtc(rtc_module), m_eventBus(eventBus) {
     //currentTime = storage.getRTCTime();
     if (!syncFromRTC()) {
-        std::cerr << "error syncing time from rtc during timeManager init" << std::endl;
+        std::cerr << "[Error] syncing time from rtc during timeManager init" << std::endl;
     }
 
 
@@ -41,7 +41,7 @@ void timeManager::setTime(const struct tm& time) {
             lastPublishedTime = event.currentTime;
         }
     } else {
-        std::cerr << "error setting system time" << std::endl;
+        std::cerr << "[Error] setting system time" << std::endl;
     }
 }
 
@@ -75,7 +75,7 @@ bool timeManager::syncFromRTC() {
 
         return true;
     } else {
-        std::cerr << "error setting system time from rtc" << std::endl;
+        std::cerr << "[Error] setting system time from rtc" << std::endl;
         return false;
     }
 
@@ -86,9 +86,9 @@ void timeManager::updateRTC() {
     RTC_Time rtcTime = tmToRtc(time);
 
     if (shared_rtc->setTime(rtcTime)) {
-        std::cout << "rtc time updated from system time" << std::endl;
+        std::cout << "RTC time updated from system time" << std::endl;
     } else {
-        std::cerr << "error updating rtc time from system time" << std::endl;
+        std::cerr << "[Error] updating rtc time from system time" << std::endl;
     }
 }
 

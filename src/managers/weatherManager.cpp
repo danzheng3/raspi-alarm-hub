@@ -105,14 +105,15 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
         return true;
 
     } catch (const std::exception& e) {
-        std::cerr << "Error parsing weather response: " << e.what() << std::endl;
+        std::cerr << "[Error] parsing weather response: " << e.what() << std::endl;
         return false;
     }
 }
 
+// auto-update
 void weatherManager::startAutoUpdate(int intervalMinutes) {
     autoUpdateEnabled = true;
-    
+    intervalMinutes = 1; // TESTING PURPOSES ONLY - CHANGE BACK TO 30
     updateThread = std::thread([this, intervalMinutes]() {
         while (autoUpdateEnabled) {
             fetchWeather(cachedLat, cachedLon);

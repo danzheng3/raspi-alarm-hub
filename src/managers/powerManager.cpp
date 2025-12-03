@@ -16,6 +16,7 @@ powerManager::~powerManager() {
 }
 
 void powerManager::registerActivity() {
+    std::lock_guard<std::mutex> lock(stateMutex);   
     lastActivityTime = std::chrono::steady_clock::now();
     
     // Wake up if dimmed or sleeping
@@ -154,6 +155,7 @@ void powerManager::stopMonitoring() {
 
 void powerManager::monitorLoop() {
     while (monitoringActive) {
+        std::lock_guard<std::mutex> lock(stateMutex);
         auto now = std::chrono::steady_clock::now();
         auto idleTime = std::chrono::duration_cast<std::chrono::seconds>(now - lastActivityTime);
         
@@ -166,11 +168,12 @@ void powerManager::monitorLoop() {
         
         // Update brightness based on ambient light (if auto-brightness enabled and active)
         if (autoBrightnessEnabled && currentState == PowerState::ACTIVE) {
-            static auto lastLightCheck = std::chrono::steady_clock::now();
-            auto timeSinceCheck = std::chrono::duration_cast<std::chrono::seconds>(now - lastLightCheck);
+            auto timeSinceCheck = std::chrono::duration_cast<std::chrono::seconds>(now - lastLightCheckTime);
             
             if (timeSinceCheck >= std::chrono::seconds(5)) {  // Check every 5 seconds
+                stateMutex.unlock();
                 int ambientLight = readAmbientLight();
+                stateMutex.lock();
                 int newBrightness = calculateBrightnessFromLight(ambientLight);
                 
                 // Only update if changed significantly (>5%)
@@ -184,7 +187,7 @@ void powerManager::monitorLoop() {
                     }
                 }
                 
-                lastLightCheck = now;
+                lastLightCheckTime = now;
             }
         }
         

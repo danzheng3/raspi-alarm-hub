@@ -3,6 +3,7 @@
 #include <atomic>
 #include <thread>
 #include <chrono>
+#include <mutex>
 #include "devices/MCP3021.h"
 #include "events/EventBus.h"
 #include "events/Events.h"
@@ -45,7 +46,9 @@ private:
     std::thread monitorThread;
     
     // Activity tracking
+    std::mutex stateMutex;
     std::chrono::steady_clock::time_point lastActivityTime;
+    std::chrono::steady_clock::time_point lastLightCheckTime;
     const std::chrono::seconds dimTimeout{30};     // Dim after 30s
     const std::chrono::seconds sleepTimeout{300};  // Sleep after 5min
     

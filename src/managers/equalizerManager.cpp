@@ -114,8 +114,7 @@ void equalizerManager::loadCustomPreset() {
         std::cout << "Loaded custom EQ settings" << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "Error loading EQ settings: " << e.what() << std::endl;
-        applyPreset("Flat");
+        std::cerr << "[Error] loading EQ settings: " << e.what() << std::endl;
     }
 }
 

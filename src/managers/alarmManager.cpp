@@ -176,6 +176,8 @@ void alarmManager::clearAlarmActions() {
     }
 }
 
+// EVENT HANDLERS
+
 void alarmManager::onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event) {
     std::cout << "Stop alarm button pressed" << std::endl;
     

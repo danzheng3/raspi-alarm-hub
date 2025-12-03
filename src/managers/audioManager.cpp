@@ -1,7 +1,7 @@
 #include "managers/audioManager.h"
 audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : connMgr(connMgr), m_eventBus(eventBus) {
     
-
+    // ADDED TO /ETC/FSTAB FOR AUTO MOUNT
     system("mkdir -p /mnt/sdcard");
     scanForSongs();
 
@@ -28,7 +28,7 @@ void audioManager::scanForSongs() {
     std::string directory = "/mnt/sdcard/";
 
     if (!std::filesystem::exists(directory)) {
-        std::cerr << "SD card not mounted at " << directory << std::endl;
+        std::cerr << "[Error] SD card not mounted at " << directory << std::endl;
         return;
     }
 
@@ -47,14 +47,10 @@ void audioManager::scanForSongs() {
     }
 }
 
-void audioManager::onSongSelected(const UISongSelectedEvent& event) {
-    std::cout << "Song selected: index " << event.songIndex << std::endl;
-    playSongAtIndex(event.songIndex);
-}
 
 void audioManager::playSongAtIndex(size_t index) {
     if (index >= songList.size()) {
-        std::cerr << "Invalid song index" << std::endl;
+        std::cerr << "[Error] Invalid song index" << std::endl;
         return;
     }
     
@@ -123,7 +119,7 @@ void audioManager::resume() {
         std::string command = "killall -CONT mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::PLAYING;
-        std::cout << "audio resumed" << std::endl;
+        std::cout << "Audio resumed" << std::endl;
     }
 }
 
@@ -132,7 +128,7 @@ void audioManager::stop() {
         std::string command = "killall -9 mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::STOPPED;
-        std::cout << "audio stopped" << std::endl;
+        std::cout << "Audio stopped" << std::endl;
     }
 }
 
@@ -170,6 +166,8 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
     std::string command = "pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(volume) + "%";
     system(command.c_str());
     currentVolume = volume;
+
+    std::cout << "audioManager: volume set to " << volume << std::endl;
 } 
 
 void audioManager::alarmRing() {
@@ -182,7 +180,11 @@ void audioManager::alarmRing() {
     std::cout << "audioManager: alarm ringing" << std::endl;
 }
 
-// event handlers
+/*
+
+EVENT HANDLERS
+
+*/
 
 void audioManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
     std::cout << "audioManager: alarm triggered event" << std::endl;
@@ -220,6 +222,13 @@ void audioManager::onBluetoothConnected(const BluetoothSpeakerConnectedEvent& ev
         setOutput(AudioOutput::BLUETOOTH);
     }
 }
+
+void audioManager::onSongSelected(const UISongSelectedEvent& event) {
+    std::cout << "Song selected: index " << event.songIndex << std::endl;
+    playSongAtIndex(event.songIndex);
+}
+
+//run command helper
 
 std::string audioManager::runCommand(const std::string& command) {
     std::array<char, 128> buffer;
