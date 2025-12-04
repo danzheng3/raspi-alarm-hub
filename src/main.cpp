@@ -57,10 +57,6 @@ int main() {
     pwrMgr.startMonitoring();
     std::cout << "Power management initialized" << std::endl;
 
-
-    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &eventBus);
-    std::cout << "DisplayManager initialized" << std::endl;
-
     weatherManager weatherMgr(storage, &eventBus);
     std::cout << "Weather initialized" << std::endl;
     weatherMgr.startAutoUpdate(30);
@@ -70,11 +66,17 @@ int main() {
         weatherMgr.fetchWeather(40.4237, -86.9212);
     }).detach();
 
+
+    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &audioMgr, &weatherMgr, &eventBus);
+    std::cout << "DisplayManager initialized" << std::endl;
+
+    
+
     std::cout << "========================================" << std::endl;
     std::cout << "System ready!" << std::endl;
     std::cout << "========================================\n" << std::endl;
 
-    return 0;
+    //return 0;
     // finish for now
 
     std::thread logicThread([&]() {

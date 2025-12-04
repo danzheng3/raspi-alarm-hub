@@ -1,5 +1,7 @@
 #include "utils/page.h"
 #include "utils/MainPage.h"
+#include "utils/MusicPage.h"
+#include "utils/SettingsPage.h"
 #include <managers/display_manager.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -7,8 +9,13 @@
 
 
 DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
-                                connectivityManager* connMgr, powerManager* pwrMgr, EventBus* eventBus)
-    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), window(nullptr), renderer(nullptr), font(nullptr), weatherIcon(nullptr), currentPage(nullptr), m_eventBus(eventBus)
+                                connectivityManager* connMgr, powerManager* pwrMgr, 
+                                audioManager* audioMgr, weatherManager* weatherMgr,
+                                EventBus* eventBus)
+    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), 
+    pwrMgr(pwrMgr), audioMgr(audioMgr), weatherMgr(weatherMgr),
+    window(nullptr), renderer(nullptr), font(nullptr), 
+    weatherIcon(nullptr), currentPage(nullptr), m_eventBus(eventBus)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0) {
         std::cerr << "Could not initialize SDL: " << SDL_GetError() << std::endl;
@@ -89,11 +96,16 @@ void DisplayManager::changePage(PageType newPage) {
 
     switch (newPage) {
         case PageType::MAIN:
-            currentPage = new MainPage(timeMgr, alarmMgr, connMgr);
+            currentPage = new MainPage(timeMgr, alarmMgr, connMgr, weatherMgr);
             break;
-        // Future cases for SETTINGS, ALARMS, TIMESET
+        case PageType::MUSIC:
+            currentPage = new MusicPage(audioMgr, m_eventBus);
+            break;
+        case PageType::SETTINGS:
+            currentPage = new SettingsPage(connMgr);
+            break;
         default:
-            currentPage = new MainPage(timeMgr, alarmMgr, connMgr); 
+            currentPage = new MainPage(timeMgr, alarmMgr, connMgr, weatherMgr);
             break;
     }
 }

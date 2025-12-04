@@ -155,12 +155,22 @@ void powerManager::stopMonitoring() {
 
 void powerManager::monitorLoop() {
     while (monitoringActive) {
-        std::lock_guard<std::mutex> lock(stateMutex);
         auto now = std::chrono::steady_clock::now();
+        PowerState state;
+        std::chrono::steady_clock::time_point lastActivity;
+        std::chrono::steady_clock::time_point lastLight;
+        {
+            std::lock_guard<std::mutex> lock(stateMutex);
+            state = currentState;
+            lastActivity = lastActivityTime;
+            lastLight = lastLightCheckTime;
+        }
+
+
         auto idleTime = std::chrono::duration_cast<std::chrono::seconds>(now - lastActivityTime);
         
         // Check for state transitions based on idle time
-        if (currentState == PowerState::ACTIVE && idleTime >= dimTimeout) {
+        if (state == PowerState::ACTIVE && idleTime >= dimTimeout) {
             transitionTo(PowerState::DIMMED);
         } else if (currentState == PowerState::DIMMED && idleTime >= sleepTimeout) {
             transitionTo(PowerState::SLEEP);
@@ -190,7 +200,7 @@ void powerManager::monitorLoop() {
                 lastLightCheckTime = now;
             }
         }
-        
+        std::lock_guard<std::mutex> lock(stateMutex);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

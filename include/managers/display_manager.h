@@ -11,10 +11,16 @@
 #include "events/Events.h"
 
 #include "managers/powerManager.h"
+#include "managers/audioManager.h"
+#include "managers/timeManager.h"
+#include "managers/alarmManager.h"
+#include "managers/connectivityManager.h"
+#include "managers/weatherManager.h"
 
 
 enum class PageType {
     MAIN,
+    MUSIC,
     SETTINGS,
     ALARMS,
     TIMESET
@@ -23,7 +29,9 @@ enum class PageType {
 class DisplayManager {
     public:
         DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
-                        connectivityManager* connMgr, powerManager* pwrMgr, EventBus* eventBus);
+                                connectivityManager* connMgr, powerManager* pwrMgr, 
+                                audioManager* audioMgr, weatherManager* weatherMgr,
+                                EventBus* eventBus);
         ~DisplayManager();
 
         void run(std::atomic<bool>& running);
@@ -49,11 +57,14 @@ class DisplayManager {
         Page* currentPage = nullptr;
         PageType currentPageType = PageType::MAIN;
 
+        // Other managers
         timeManager* timeMgr;
         alarmManager* alarmMgr;
         connectivityManager* connMgr;
         EventBus* m_eventBus;
         powerManager* pwrMgr;
+        audioManager* audioMgr;
+        weatherManager* weatherMgr;
 
         //event States. thread-safe
         std::mutex stateMutex;

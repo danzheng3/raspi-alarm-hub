@@ -82,10 +82,14 @@ bool weatherManager::fetchWeather(double latitude, double longitude) {
 bool weatherManager::parseWeatherResponse(const std::string& response) {
     try {
         auto json = nlohmann::json::parse(response);
-        auto current = json["current_weather"];
+        if (!json.contains("current")) {
+            std::cerr << "[Error] missing 'current' field in weather response" << std::endl;
+            return false;
+        }
+        auto current = json["current"];
 
         currentWeather.temperature = current["temperature"].get<double>();
-        //currentWeather.weatherCode = current["weathercode"].get<int>();
+        currentWeather.weatherCode = current["weathercode"].get<int>(); //MAY NEED TO FIX THIS
         currentWeather.condition = weatherCodeToString(currentWeather.weatherCode);
         currentWeather.humidity = current["relative_humidity_2m"].get<int>();
         currentWeather.windSpeed = current["wind_speed_10m"].get<double>();

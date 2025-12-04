@@ -2,12 +2,14 @@
 #include <SDL2/SDL.h>
 #include <iomanip>
 
-MainPage::MainPage(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr) 
-    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr) 
+MainPage::MainPage(timeManager* timeMgr, alarmManager* alarmMgr, connectivityManager* connMgr,
+                   weatherManager* weatherMgr, powerManager* powerMgr) 
+    : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), weatherMgr(weatherMgr), powerMgr(powerMgr) 
 {
     font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48);
     smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36);
-    
+    tinyFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
+
     if (timeMgr) {
         std::string currentTime = timeMgr->getFormattedTime();
         // Parse HH:MM format
@@ -27,110 +29,215 @@ MainPage::~MainPage() {
     }   
 }
 
+std::string MainPage::getWeatherIconPath(int weatherCode) {
+    // Map weather codes to icon files
+    if (weatherCode == 0 || weatherCode == 1) return "../../images/sunny-weather.png";
+    if (weatherCode == 2 || weatherCode == 3) return "../../images/cloudy.png";
+    //if (weatherCode >= 45 && weatherCode <= 48) return "../../images/fog.png"; // add if this becomes an issue
+    if (weatherCode >= 51 && weatherCode <= 67) return "../../images/rainy.png";
+    if (weatherCode >= 71 && weatherCode <= 77) return "../../images/snow_icon.png";
+    if (weatherCode >= 80 && weatherCode <= 82) return "../../images/rainy.png";
+    if (weatherCode >= 85 && weatherCode <= 86) return "../../images/snow_icon.png";
+    //if (weatherCode >= 95) return "../../images/thunder.png"; // add if needed
+    return "../../images/cloudy.png"; // default
+}
+
 void MainPage::render(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderClear(renderer);
-
-    SDL_Color black = {0, 0, 0, 255};
-
-    // Display WiFi status
-    std::string wifiStatus = connMgr ? (connMgr->isWifiConnected() ? "WiFi: Connected" : "WiFi: Disconnected") : "WiFi: Unknown";
-    renderText(renderer, wifiStatus, 50, 50, black, smallFont);
-
-    // Display current time
-    std::string currentTimeStr = timeMgr ? timeMgr->getFormattedTime() : "--:--";    
-    int centerX = 720 / 2 - 150;
-    int centerY = 1280 / 2 - 80;
-    
-    timeDisplayRect = { centerX - 20, centerY - 20, 340, 120 };
-    SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
-    SDL_RenderDrawRect(renderer, &timeDisplayRect);
-    
-    renderText(renderer, currentTimeStr, centerX, centerY, black, font);
-
-    // Display alarm time
-    std::string alarmTime = alarmMgr ? (alarmMgr->isAlarmEnabled() ? alarmMgr->getAlarmTime() : "None") : "None";
-    //alarmDisplayRect = 
-    renderText(renderer, "Alarm: " + alarmTime, centerX, 150, black, smallFont);
-    int alarmY = centerY + 120;
-    alarmDisplayRect = { centerX - 50, 140, 280, 60 };
-    SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
-    SDL_RenderDrawRect(renderer, &alarmDisplayRect);
-
-    // Touch feedback - blue circle
-    if (touched) {
-        SDL_SetRenderDrawColor(renderer, 0, 100, 255, 180);
-        drawCircle(renderer, touchX, touchY, 30);
+    // Gradient background (dark blue to darker blue)
+    for (int y = 0; y < 1280; y++) {
+        int blue = 35 + (y * 15) / 1280;
+        SDL_SetRenderDrawColor(renderer, 15, 20, blue, 255);
+        SDL_RenderDrawLine(renderer, 0, y, 720, y);
     }
-
-    // Popup for time adjustment
+    
+    SDL_Color white = {255, 255, 255, 255};
+    SDL_Color lightGray = {200, 200, 200, 255};
+    SDL_Color dimGray = {150, 150, 150, 255};
+    SDL_Color accent = {100, 150, 255, 255};
+    
+    // Status bar (top)
+    SDL_SetRenderDrawColor(renderer, 25, 30, 45, 200);
+    SDL_Rect statusBar = {0, 0, 720, 60};
+    SDL_RenderFillRect(renderer, &statusBar);
+    
+    // WiFi status (left side of status bar)
+    std::string wifiStatus = connMgr ? 
+        (connMgr->isWifiConnected() ? "WiFi ✓" : "WiFi ✗") : "WiFi ?";
+    renderText(renderer, wifiStatus, 20, 15, 
+               connMgr && connMgr->isWifiConnected() ? accent : dimGray, tinyFont);
+    
+    // Date (right side of status bar)
+    if (timeMgr) {
+        std::string dateStr = timeMgr->getFormattedDate("%b %d, %Y");
+        renderText(renderer, dateStr, 520, 15, lightGray, tinyFont);
+    }
+    
+    // Large time display (center-top)
+    if (timeMgr) {
+        std::string timeStr = timeMgr->getFormattedTime();
+        timeDisplayRect = {100, 100, 520, 150};
+        
+        // Semi-transparent background
+        SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
+        SDL_RenderFillRect(renderer, &timeDisplayRect);
+        SDL_SetRenderDrawColor(renderer, accent.r, accent.g, accent.b, 255);
+        for (int i = 0; i < 3; i++) {
+            SDL_Rect outline = {timeDisplayRect.x - i, timeDisplayRect.y - i, 
+                                timeDisplayRect.w + 2*i, timeDisplayRect.h + 2*i};
+            SDL_RenderDrawRect(renderer, &outline);
+        }
+        
+        renderText(renderer, timeStr, 180, 130, white, font);
+    }
+    
+    // Weather display (center)
+    if (weatherMgr) {
+        WeatherData weather = weatherMgr->getWeatherData();
+        if (weather.valid) {
+            weatherRect = {200, 300, 320, 200};
+            
+            SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
+            SDL_RenderFillRect(renderer, &weatherRect);
+            SDL_SetRenderDrawColor(renderer, 80, 85, 100, 255);
+            SDL_RenderDrawRect(renderer, &weatherRect);
+            
+            // Weather icon
+            std::string iconPath = getWeatherIconPath(weather.weatherCode);
+            SDL_Surface* iconSurface = IMG_Load(iconPath.c_str());
+            if (iconSurface) {
+                SDL_Texture* iconTexture = SDL_CreateTextureFromSurface(renderer, iconSurface);
+                SDL_Rect iconRect = {weatherRect.x + 40, weatherRect.y + 20, 100, 100};
+                SDL_RenderCopy(renderer, iconTexture, nullptr, &iconRect);
+                SDL_DestroyTexture(iconTexture);
+                SDL_FreeSurface(iconSurface);
+            }
+            
+            // Temperature
+            std::ostringstream tempStr;
+            tempStr << (int)weather.temperature << "°F";
+            renderText(renderer, tempStr.str(), weatherRect.x + 170, weatherRect.y + 40, 
+                       white, smallFont);
+            
+            // Condition
+            renderText(renderer, weather.condition, weatherRect.x + 20, weatherRect.y + 150, 
+                       lightGray, tinyFont);
+        }
+    }
+    
+    // Alarm display (below weather)
+    alarmDisplayRect = {150, 550, 420, 100};
+    SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
+    SDL_RenderFillRect(renderer, &alarmDisplayRect);
+    SDL_SetRenderDrawColor(renderer, 80, 85, 100, 255);
+    SDL_RenderDrawRect(renderer, &alarmDisplayRect);
+    
+    std::string alarmLabel = "Alarm: ";
+    std::string alarmTime = alarmMgr ? 
+        (alarmMgr->isAlarmEnabled() ? alarmMgr->getAlarmTime() : "Not Set") : "?";
+    renderText(renderer, alarmLabel + alarmTime, alarmDisplayRect.x + 50, 
+               alarmDisplayRect.y + 30, white, smallFont);
+    
+    // Navigation buttons (bottom)
+    int btnY = 1050;
+    int btnW = 150;
+    int btnH = 150;
+    int spacing = (720 - 4 * btnW) / 5;
+    
+    musicButton = {spacing, btnY, btnW, btnH};
+    settingsButton = {spacing * 2 + btnW, btnY, btnW, btnH};
+    alarmButton = {spacing * 3 + btnW * 2, btnY, btnW, btnH};
+    wifiButton = {spacing * 4 + btnW * 3, btnY, btnW, btnH};
+    
+    renderIconButton(renderer, musicButton, "♪", "Music", accent);
+    renderIconButton(renderer, settingsButton, "⚙", "Settings", accent);
+    renderIconButton(renderer, alarmButton, "🔔", "Alarm", accent);
+    renderIconButton(renderer, wifiButton, "📡", "WiFi", accent);
+    
+    // Touch feedback
+    if (touched) {
+        SDL_SetRenderDrawColor(renderer, 100, 150, 255, 100);
+        for (int r = 10; r < 50; r += 5) {
+            drawCircle(renderer, touchX, touchY, r);
+        }
+    }
+    
+    // Time/Alarm adjustment popup
     if (currentMode == AdjustmentMode::ADJUST_TIME) {
         renderAdjustPopup(renderer, "Set Time");
     } else if (currentMode == AdjustmentMode::ADJUST_ALARM) {
         renderAdjustPopup(renderer, "Set Alarm");
     }
-
+    
     SDL_RenderPresent(renderer);
 }
 
-void MainPage::handleEvent(const SDL_Event& e) {
-    if (e.type == SDL_FINGERDOWN) {
-        touched = true;
-        touchX = static_cast<int>(e.tfinger.x * 720); 
-        touchY = static_cast<int>(e.tfinger.y * 1280);
-    } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-        touched = true;
-        touchX = e.button.x; 
-        touchY = e.button.y;
+void MainPage::renderIconButton(SDL_Renderer* renderer, const SDL_Rect& rect, 
+                                const std::string& icon, const std::string& label, 
+                                SDL_Color color) {
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 200);
+    SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderDrawRect(renderer, &rect);
+    
+    SDL_Color white = {255, 255, 255, 255};
+    renderText(renderer, icon, rect.x + rect.w/2 - 20, rect.y + 30, white, font);
+    renderText(renderer, label, rect.x + rect.w/2 - 40, rect.y + 100, white, tinyFont);
+}
 
-        if (currentMode == AdjustmentMode::NONE) {
-            if (isPointInRect(touchX, touchY, timeDisplayRect)) {
-                currentMode = AdjustmentMode::ADJUST_TIME;
-                std::string currentTime = timeMgr->getFormattedTime();
-                sscanf(currentTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
-            } else if (isPointInRect(touchX, touchY, alarmDisplayRect)) {
-                currentMode = AdjustmentMode::ADJUST_ALARM;
-                std::string alarmTime = alarmMgr->getAlarmTime();
-                sscanf(alarmTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
-            }
+void MainPage::handleEvent(const SDL_Event& e) {
+    if (e.type == SDL_FINGERDOWN || e.type == SDL_MOUSEBUTTONDOWN) {
+        touched = true;
+        if (e.type == SDL_MOUSEBUTTONDOWN) {
+            touchX = e.button.x;
+            touchY = e.button.y;
+        } else {
+            touchX = static_cast<int>(e.tfinger.x * 720);
+            touchY = static_cast<int>(e.tfinger.y * 1280);
         }
         
-        
-        // Handle popup button touches
-        else { 
-            if (isPointInRect(touchX, touchY, HPlusRect)) {
-                adjustedHour = (adjustedHour + 1) % 24;
-            } else if (isPointInRect(touchX, touchY, HMinusRect)) {
-                adjustedHour = (adjustedHour - 1 + 24) % 24;
-            } else if (isPointInRect(touchX, touchY, MPlusRect)) {
-                adjustedMinute = (adjustedMinute + 1) % 60;
-            } else if (isPointInRect(touchX, touchY, MMinusRect)) {
-                adjustedMinute = (adjustedMinute - 1 + 60) % 60;
-            } else if (isPointInRect(touchX, touchY, SaveRect)) {
-                std::ostringstream oss;
-                oss << std::setfill('0') << std::setw(2) << adjustedHour << ":"
-                    << std::setfill('0') << std::setw(2) << adjustedMinute;
-                
-                if (currentMode == AdjustmentMode::ADJUST_TIME) {
-                    if (timeMgr) {
-                        struct tm timeToSet = timeMgr->getCurrentTime();
-                        timeToSet.tm_hour = adjustedHour;
-                        timeToSet.tm_min = adjustedMinute;
-                        timeToSet.tm_sec = 0;
-                        timeMgr->setTime(timeToSet);
-                    }
-                } else if (currentMode == AdjustmentMode::ADJUST_ALARM) {
-                    if (alarmMgr) {
-                        alarmMgr->setAlarm(oss.str());
-                        alarmMgr->saveToStorage(); 
-                    }
-                }
-                currentMode = AdjustmentMode::NONE; // Close popup
-            } else if (isPointInRect(touchX, touchY, CancelRect)) {
-                currentMode = AdjustmentMode::NONE; // Close popup
+        if (currentMode == AdjustmentMode::NONE) {
+            // Check navigation buttons
+            if (isPointInRect(touchX, touchY, musicButton)) {
+                pageChangeRequest = PageType::MUSIC;
+                return;
             }
+            if (isPointInRect(touchX, touchY, wifiButton)) {
+                pageChangeRequest = PageType::SETTINGS;
+                return;
+            }
+            
+            // Long press on time to adjust
+            if (isPointInRect(touchX, touchY, timeDisplayRect)) {
+                pressStartTime = std::chrono::steady_clock::now();
+                isPressing = true;
+            }
+            
+            // Tap alarm to adjust
+            if (isPointInRect(touchX, touchY, alarmDisplayRect)) {
+                currentMode = AdjustmentMode::ADJUST_ALARM;
+                if (alarmMgr) {
+                    std::string alarmTime = alarmMgr->getAlarmTime();
+                    sscanf(alarmTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
+                }
+            }
+        } else {
+            // Handle popup buttons (same as before)
+            handlePopupButtons(touchX, touchY);
         }
     } else if (e.type == SDL_FINGERUP || e.type == SDL_MOUSEBUTTONUP) {
+        if (isPressing) {
+            auto pressDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - pressStartTime);
+            
+            if (pressDuration.count() > 500) {  // Long press (500ms)
+                currentMode = AdjustmentMode::ADJUST_TIME;
+                if (timeMgr) {
+                    std::string currentTime = timeMgr->getFormattedTime();
+                    sscanf(currentTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
+                }
+            }
+            isPressing = false;
+        }
         touched = false;
     }
 }

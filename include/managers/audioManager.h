@@ -9,6 +9,7 @@
 #include "managers/connectivityManager.h"
 #include "events/EventBus.h"
 #include "events/Events.h"
+#pragma once
 
 #define ALARM_RING_PATH "../../images/alarm.mp3"
 
