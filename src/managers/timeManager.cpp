@@ -150,3 +150,10 @@ std::string timeManager::getFormattedTime(const char* format) const {
     strftime(buffer, sizeof(buffer), format, &time);
     return std::string(buffer);
 }
+
+std::string timeManager::getFormattedDate(const char* format) const {
+    struct tm time = getSystemTime();
+    char buffer[64];
+    strftime(buffer, sizeof(buffer), format, &time);
+    return std::string(buffer);
+}

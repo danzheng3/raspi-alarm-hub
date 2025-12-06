@@ -361,3 +361,42 @@ SDL_Rect MainPage::renderLabeledBox(SDL_Renderer* renderer,
 
     
 }
+
+void MainPage::handlePopupButtons(int x, int y) {
+    // Hour Adjustment
+    if (isPointInRect(x, y, HPlusRect)) {
+        adjustedHour = (adjustedHour + 1) % 24;
+    } else if (isPointInRect(x, y, HMinusRect)) {
+        adjustedHour = (adjustedHour - 1 + 24) % 24;
+    }
+    
+    // Minute Adjustment
+    if (isPointInRect(x, y, MPlusRect)) {
+        adjustedMinute = (adjustedMinute + 1) % 60;
+    } else if (isPointInRect(x, y, MMinusRect)) {
+        adjustedMinute = (adjustedMinute - 1 + 60) % 60;
+    }
+
+    // Save Action
+    if (isPointInRect(x, y, SaveRect)) {
+        if (currentMode == AdjustmentMode::ADJUST_TIME && timeMgr) {
+            // Preserve current date, only update HH:MM
+            struct tm newTime = timeMgr->getCurrentTime();
+            newTime.tm_hour = adjustedHour;
+            newTime.tm_min = adjustedMinute;
+            newTime.tm_sec = 0;
+            timeMgr->setTime(newTime);
+        } 
+        else if (currentMode == AdjustmentMode::ADJUST_ALARM && alarmMgr) {
+            char buffer[6];
+            snprintf(buffer, sizeof(buffer), "%02d:%02d", adjustedHour, adjustedMinute);
+            alarmMgr->setAlarm(std::string(buffer));
+        }
+        currentMode = AdjustmentMode::NONE;
+    }
+
+    // Cancel Action
+    if (isPointInRect(x, y, CancelRect)) {
+        currentMode = AdjustmentMode::NONE;
+    }
+}

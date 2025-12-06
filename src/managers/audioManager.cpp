@@ -243,6 +243,10 @@ std::string audioManager::runCommand(const std::string& command) {
     return result;
 }
 
+audioManager::AudioState audioManager::getState() {
+    return currentState;
+}
+
 
 
 /*
