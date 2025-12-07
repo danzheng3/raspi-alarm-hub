@@ -7,6 +7,7 @@
 #include "events/Events.h"
 #include <unistd.h>
 #include <chrono>
+#include <thread>
 #include <sys/time.h>
 
 class timeManager {
@@ -25,6 +26,7 @@ class timeManager {
 
         bool syncFromRTC();
         void updateRTC();
+        bool trySyncFromNTP();
 
         void checkAndPublishTimeUpdate();
     

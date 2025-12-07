@@ -54,6 +54,11 @@ int main() {
     std::cout << "connMgr initialized" << std::endl;
     std::cout << "WiFi: " << (connMgr.isWifiConnected() ? "Connected" : "Disconnected") << std::endl;
 
+    if (connMgr.isWifiConnected()) {
+        std::cout << "WiFi Connected: " << (connMgr.isWifiConnected() ? "Yes" : "No") << std::endl;
+        std::cout << "Attempting NTP Sync..." << std::endl;
+        timeMgr.trySyncFromNTP();
+    }
 
     audioManager audioMgr(&connMgr, &eventBus);
     std::cout << "Audio: " << audioMgr.getSongList().size() << " songs" << std::endl;

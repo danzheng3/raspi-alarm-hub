@@ -26,6 +26,17 @@ void connectivityManager::saveBluetoothSpeakerID(const std::string& speakerID) {
 void connectivityManager::init() {
     loadCredentials();
 
+    if (wifiAdapter.isConnected()) {
+        std::cout << "WiFi is already connected. Skipping configuration." << std::endl;
+        
+        if (m_eventBus) {
+            WifiStatusChangedEvent event;
+            event.isConnected = true;
+            m_eventBus->publish(event);
+        }
+        return; // EXIT EARLY
+    }
+
     if (!currentSSID.empty() && !wifiPassword.empty()) {
         if (wifiAdapter.connect(currentSSID, wifiPassword)) {
             std::cout << "Connected to WiFi: " << currentSSID << std::endl;

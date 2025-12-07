@@ -25,7 +25,7 @@ audioManager::~audioManager() {
 
 void audioManager::scanForSongs() {
     songList.clear();
-    std::string directory = "/mnt/sdcard/";
+    std::string directory = "/home/daniel/Music";
 
     if (!std::filesystem::exists(directory)) {
         std::cerr << "[Error] SD card not mounted at " << directory << std::endl;

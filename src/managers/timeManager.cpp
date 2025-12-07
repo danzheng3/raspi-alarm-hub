@@ -3,11 +3,14 @@
 
 timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_module, EventBus* eventBus) 
     : storage(storage), shared_rtc(rtc_module), m_eventBus(eventBus) {
-    //currentTime = storage.getRTCTime();
-    if (!syncFromRTC()) {
-        std::cerr << "[Error] syncing time from rtc during timeManager init" << std::endl;
+    
+    std::cout << "Initializing Time: Attempting to sync from RTC..." << std::endl;
+    if (syncFromRTC()) {
+        std::cout << "Time initialized from RTC: " << getFormattedTime() << std::endl;
+    } else {
+        std::cerr << "[Warning] Failed to sync from RTC (Battery dead or first boot)." << std::endl;
+        // Fallback: System time remains at default (1970/2000) until NTP kicks in
     }
-
 
     lastPublishedTime = getFormattedTime();
     std::cout << "timeManager initialized, current time: " << lastPublishedTime << std::endl;
@@ -15,6 +18,42 @@ timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_
 
 timeManager::~timeManager() {
     updateRTC();
+}
+
+bool timeManager::trySyncFromNTP() {
+    // Force OS to check NTP
+    std::cout << "Starting NTP Sync..." << std::endl;
+    
+    system("sudo systemctl restart systemd-timesyncd");
+    
+    for(int i = 0; i < 20; i++) {
+        time_t now = time(nullptr);
+        struct tm* t = localtime(&now);
+        
+        // Check if year is valid (e.g., > 2023)
+        // If system time was 1970/2000, and is now 2025, NTP worked.
+        if (t->tm_year + 1900 > 2023) {
+            std::string newTime = getFormattedTime();
+            std::string newDate = getFormattedDate();
+
+            std::cout << "NTP Sync Successful! System Time: " << newDate << " " << newTime << std::endl;
+            
+            updateRTC(); 
+            std::cout << "RTC updated with accurate NTP time." << std::endl;
+            
+            // 4. Notify the UI
+            if (m_eventBus) {
+                TimeUpdatedEvent event;
+                event.currentTime = newTime;
+                m_eventBus->publish(event);
+            }
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    
+    std::cerr << "NTP Sync timed out (Internet issues?). Keeping RTC time." << std::endl;
+    return false;
 }
 
 bool timeManager::setSystemTime(const struct tm& time) {

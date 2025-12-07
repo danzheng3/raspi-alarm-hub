@@ -46,6 +46,13 @@ bool WifiAdapter::disconnect() {
 }
 
 bool WifiAdapter::isConnected() {
+    auto now = std::chrono::steady_clock::now();
+    if (now - lastCheckTime < std::chrono::seconds(5)) {
+        return cachedConnectionState;
+    }
+    lastCheckTime = now;
+
+    // cache and check every 5 seconds
     std::string command = "nmcli -t -f WIFI g";
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
@@ -56,7 +63,34 @@ bool WifiAdapter::isConnected() {
         std::string status(buffer);
         connected = (status.find("enabled") != std::string::npos);
     }
-    return connected;
+    std::cout << "wifi isConnected: wifi enabled" << std::endl;
+    pclose(pipe);
+    
+    if (!connected) {
+        cachedConnectionState = false;
+        return false;
+    }
+
+    std::string command2 = "nmcli -t -f GENERAL.STATE device show wlan0";
+    FILE* pipe2 = popen(command2.c_str(), "r");
+    if (!pipe2) return false;
+
+    char buffer2[256];
+    bool is_actually_connected = false;
+    while (fgets(buffer2, sizeof(buffer2), pipe2)) {
+        std::string output(buffer2);
+        // nmcli returns state codes. 100 means fully connected.
+        std::cout << "wifi isConnected: state output: " << output << std::endl;
+        if (output.find("100 (connected)") != std::string::npos) {
+            is_actually_connected = true;
+        }
+    }
+    std::cout << "is wifi actually connected?: " << is_actually_connected << std::endl;
+
+    pclose(pipe2);
+
+    cachedConnectionState = is_actually_connected;
+    return cachedConnectionState;
 }
 
 std::string WifiAdapter::getIPAddress() const {

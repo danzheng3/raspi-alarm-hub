@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <chrono>
 
 class WifiAdapter {
     public:
@@ -16,4 +17,7 @@ class WifiAdapter {
     private:
         bool connected;
         std::string ipAddress;
+
+        std::chrono::steady_clock::time_point lastCheckTime;
+        bool cachedConnectionState = false;
 };

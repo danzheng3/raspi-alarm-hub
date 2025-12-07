@@ -4,10 +4,10 @@ pillbox::pillbox() {
     if (gpioInitialise() < 0) {
         std::cerr << "failed to initialize pigpio. check daemon" << std::endl;\
 
-        gpioSetPWMfrequency(PILLBOX_PWM_PIN, SERVO_FREQ_HZ);
-        gpioServo(PILLBOX_PWM_PIN, SERVO_NEUTRAL_US);
-        std::cout << "Pillbox Driver initialized on GPIO " << PILLBOX_PWM_PIN << std::endl;
     }
+    gpioSetPWMfrequency(PILLBOX_PWM_PIN, SERVO_FREQ_HZ);
+    gpioServo(PILLBOX_PWM_PIN, SERVO_NEUTRAL_US);
+    std::cout << "Pillbox Driver initialized on GPIO " << PILLBOX_PWM_PIN << std::endl;
 }
 
 pillbox::~pillbox() {

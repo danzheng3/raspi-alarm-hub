@@ -55,15 +55,16 @@ bool weatherManager::fetchWeather(double latitude, double longitude) {
 
 
         CURLcode res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
 
         if (res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            curl_easy_cleanup(curl);
             return false;
         }
 
         long response_code;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_cleanup(curl);
         if (response_code != 200) {
             std::cerr << "Error: Received HTTP response code " << response_code << std::endl;
             return false;
@@ -88,17 +89,18 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
         }
         auto current = json["current"];
 
-        currentWeather.temperature = current["temperature"].get<double>();
-        currentWeather.weatherCode = current["weathercode"].get<int>(); //MAY NEED TO FIX THIS
+        currentWeather.temperature = current.value("temperature_2m", 0.0);
+        currentWeather.weatherCode = current.value("weather_code", 0); 
+        currentWeather.humidity = current.value("relative_humidity_2m", 0);
+        currentWeather.windSpeed = current.value("wind_speed_10m", 0.0);
+        currentWeather.precipitation = current.value("precipitation", 0.0);
+        
         currentWeather.condition = weatherCodeToString(currentWeather.weatherCode);
-        currentWeather.humidity = current["relative_humidity_2m"].get<int>();
-        currentWeather.windSpeed = current["wind_speed_10m"].get<double>();
-        currentWeather.precipitation = current["precipitation"].get<double>();
         currentWeather.valid = true;
 
         if (m_eventBus) {
             WeatherUpdatedEvent event;
-            event.temperature = currentWeather.temperature;
+            event.temperature = (int)currentWeather.temperature;
             event.condition = currentWeather.condition;
             m_eventBus->publish(event);
         }
@@ -117,7 +119,7 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
 // auto-update
 void weatherManager::startAutoUpdate(int intervalMinutes) {
     autoUpdateEnabled = true;
-    intervalMinutes = 1; // TESTING PURPOSES ONLY - CHANGE BACK TO 30
+    intervalMinutes = 10; // TESTING PURPOSES ONLY - CHANGE BACK TO 30
     updateThread = std::thread([this, intervalMinutes]() {
         while (autoUpdateEnabled) {
             fetchWeather(cachedLat, cachedLon);

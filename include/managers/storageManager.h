@@ -4,7 +4,7 @@
 
 class storageManager {
     public:
-        storageManager(const std::string& filepath_ = "../../config.json");
+        storageManager(const std::string& filepath_ = "/home/daniel/Downloads/raspi-alarm-hub/config.json");
         ~storageManager();
 
         bool load();
