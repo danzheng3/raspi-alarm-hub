@@ -29,7 +29,9 @@ public:
     // Presets
     void applyPreset(const std::string& presetName);
     void loadCustomPreset();
-    void saveCustomPreset();
+
+    //test
+    bool testHardwareConnection();
     
     // Get all bands
     std::array<EqualizerBand, 7> getAllBands() const { return bands; }

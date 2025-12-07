@@ -8,6 +8,7 @@
 #include "audioManager.h"
 #include "events/EventBus.h"
 #include "weatherManager.h"
+#include "equalizerManager.h"
 
 
 #include <thread>
@@ -34,7 +35,7 @@ int main() {
     auto rtc = std::make_shared<MCP7940N>(bus);
     std::cout << "RTC initialized " << std::endl;
 
-  auto adc = std::make_shared<MCP3021>(bus); 
+    auto adc = std::make_shared<MCP3021>(bus); 
     std::cout << "ADC initialized " << std::endl;
 
     timeManager timeMgr(storage, rtc, &eventBus);
@@ -81,7 +82,8 @@ int main() {
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &audioMgr, &weatherMgr, &eventBus);
     std::cout << "DisplayManager initialized" << std::endl;
 
-    
+    equalizerManager eqMgr(bus, storage, &eventBus);
+   
 
     std::cout << "========================================" << std::endl;
     std::cout << "System ready!" << std::endl;

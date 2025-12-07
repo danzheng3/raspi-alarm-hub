@@ -20,6 +20,9 @@ equalizerManager::equalizerManager(std::shared_ptr<I2CBus> i2cBus,
     bands[4] = {"2.5kHz", 2500, 128};
     bands[5] = {"6.25kHz", 6250, 128};
     bands[6] = {"16kHz", 16000, 128};
+
+
+    testHardwareConnection();
     
     // Load saved preset or defaults
     loadCustomPreset();
@@ -121,5 +124,56 @@ void equalizerManager::loadCustomPreset() {
 void equalizerManager::onEqualizerChanged(const UIEqualizerBandChanged& event) {
     std::cout << "EQ band " << event.bandIndex << " changed to " << (int)event.value << std::endl;
     setBand(event.bandIndex, event.value);
-    saveCustomPreset();
+}
+
+bool equalizerManager::testHardwareConnection() {
+    std::cout << "--- Testing Equalizer Hardware (MCP4461) ---" << std::endl;
+    bool success = true;
+
+    // Test Device 1 (0x2C)
+    uint8_t originalVal, testVal;
+    
+    // Attempt to read current value of Wiper 0
+    if (digipot1->readWiper(MCP44X1::Wiper::W0, originalVal)) {
+        std::cout << "[0x2C] Read OK. Current: " << (int)originalVal << std::endl;
+        
+        // Write test value
+        if (digipot1->setWiper(MCP44X1::Wiper::W0, 0x55)) {
+            digipot1->readWiper(MCP44X1::Wiper::W0, testVal);
+            if (testVal == 0x55) {
+                std::cout << "[0x2C] Write/Verify OK." << std::endl;
+            } else {
+                std::cerr << "[0x2C] Write Failed! Expected 0x55, got " << (int)testVal << std::endl;
+                success = false;
+            }
+            // Restore original
+            digipot1->setWiper(MCP44X1::Wiper::W0, originalVal);
+        }
+    } else {
+        std::cerr << "[0x2C] Device not responding! Check wiring/power." << std::endl;
+        success = false;
+    }
+
+    // Test Device 2 (0x2D)
+    if (digipot2->readWiper(MCP44X1::Wiper::W0, originalVal)) {
+        std::cout << "[0x2D] Read OK. Current: " << (int)originalVal << std::endl;
+         // Write test value
+        if (digipot2->setWiper(MCP44X1::Wiper::W0, 0xAA)) {
+            digipot2->readWiper(MCP44X1::Wiper::W0, testVal);
+            if (testVal == 0xAA) {
+                std::cout << "[0x2D] Write/Verify OK." << std::endl;
+            } else {
+                std::cerr << "[0x2D] Write Failed! Expected 0xAA, got " << (int)testVal << std::endl;
+                success = false;
+            }
+            // Restore original
+            digipot2->setWiper(MCP44X1::Wiper::W0, originalVal);
+        }
+    } else {
+        std::cerr << "[0x2D] Device not responding! Check wiring/power." << std::endl;
+        success = false;
+    }
+
+    std::cout << "MCP4461 test finish. Successful: " << success << std::endl;
+    return success;
 }

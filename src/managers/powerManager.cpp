@@ -7,6 +7,10 @@ powerManager::powerManager(std::shared_ptr<MCP3021> adc, EventBus* eventBus)
     
     lastActivityTime = std::chrono::steady_clock::now();
     currentState = PowerState::ACTIVE;
+
+    if (lightSensor) {
+        lightSensor->testConnection();
+    }
     
     std::cout << "PowerManager initialized" << std::endl;
 }

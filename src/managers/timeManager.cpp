@@ -41,7 +41,7 @@ bool timeManager::trySyncFromNTP() {
             updateRTC(); 
             std::cout << "RTC updated with accurate NTP time." << std::endl;
             
-            // 4. Notify the UI
+            // notify UI
             if (m_eventBus) {
                 TimeUpdatedEvent event;
                 event.currentTime = newTime;
@@ -147,6 +147,8 @@ void timeManager::checkAndPublishTimeUpdate() {
     std::string currentTime = getFormattedTime();
     if (currentTime != lastPublishedTime) {
         lastPublishedTime = currentTime;
+        std::cout << "[Time Manager]: Time changed from " << lastPublishedTime 
+                  << " to " << currentTime << " - Publishing Event" << std::endl;
         if (m_eventBus) {
             TimeUpdatedEvent event;
             event.currentTime = currentTime;

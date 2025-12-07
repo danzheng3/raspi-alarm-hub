@@ -10,9 +10,9 @@ public:
     //enum for the four wipers on the chip
     enum class Wiper: uint8_t {
         W0=0x00,
-        W1=0x10,
-        W2=0x20,
-        W3=0x30
+        W1=0x01,
+        W2=0x06,
+        W3=0x07 // THESE ARE REGISTER INDEXES
     };
 
     MCP44X1(std::shared_ptr<I2CBus> bus, uint8_t address);
@@ -24,5 +24,7 @@ private:
     std::shared_ptr<I2CBus> i2cBus;
     uint8_t slaveAddress;
 
+    static const uint8_t CMD_WRITE = 0x00; // Bits 00
+    static const uint8_t CMD_READ  = 0x03; // Bits 11 (0x0C)
 
 };

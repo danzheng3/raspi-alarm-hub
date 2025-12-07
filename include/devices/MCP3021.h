@@ -1,5 +1,6 @@
 #include "hardware_layer/I2CBus.h"
 #include <cstdint>
+#include <iostream>
 #include <memory>
 
 
@@ -13,6 +14,7 @@ class MCP3021 {
         bool readVoltage(float& voltage, float vref=3.3f);
         
         int readValue();
+        bool testConnection();
 
     private:
         std::shared_ptr<I2CBus> i2cBus;

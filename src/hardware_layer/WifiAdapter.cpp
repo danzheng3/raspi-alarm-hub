@@ -63,7 +63,7 @@ bool WifiAdapter::isConnected() {
         std::string status(buffer);
         connected = (status.find("enabled") != std::string::npos);
     }
-    std::cout << "wifi isConnected: wifi enabled" << std::endl;
+    //std::cout << "wifi isConnected: wifi enabled" << std::endl;
     pclose(pipe);
     
     if (!connected) {
@@ -80,16 +80,17 @@ bool WifiAdapter::isConnected() {
     while (fgets(buffer2, sizeof(buffer2), pipe2)) {
         std::string output(buffer2);
         // nmcli returns state codes. 100 means fully connected.
-        std::cout << "wifi isConnected: state output: " << output << std::endl;
+        //std::cout << "wifi isConnected: state output: " << output << std::endl;
         if (output.find("100 (connected)") != std::string::npos) {
             is_actually_connected = true;
         }
     }
-    std::cout << "is wifi actually connected?: " << is_actually_connected << std::endl;
 
     pclose(pipe2);
 
     cachedConnectionState = is_actually_connected;
+    std::cout << "[WifiAdapter] isConnected: " << (cachedConnectionState ? "true" : "false") << std::endl;
+    
     return cachedConnectionState;
 }
 

@@ -30,3 +30,16 @@ bool MCP3021::readVoltage(float& voltage, float vref) {
     voltage = (static_cast<float>(rawValue) / 1023.0f) * vref;
     return true;
 }
+
+bool MCP3021::testConnection() {
+    uint16_t val;
+    std::cout << "Testing MCP3021 (ADC - LDR)";
+    if (readValue(val)) {
+        // expect a value between 0 and 1023 with Ack
+        std::cout << "OK (Value: " << val << ")" << std::endl;
+        return true;
+    } else {
+        std::cerr << "FAILED (I2C Error or Device missing)" << std::endl;
+        return false;
+    }
+}
