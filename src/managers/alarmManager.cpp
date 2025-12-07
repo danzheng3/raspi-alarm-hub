@@ -110,8 +110,9 @@ bool alarmManager::shouldTrigger() {
 
     std::string currentTime = timeMgr.getFormattedTime();
     if (currentTime == alarmTime) {
-        alarmTriggered = true;
         std::cout << "Alarm triggered at " << currentTime << std::endl;
+        alarmTriggered = true;
+
 
         triggerAlarmActions();
 
@@ -131,11 +132,8 @@ void alarmManager::triggerAlarmActions() {
     std::cout << "Triggering alarm actions:" << std::endl;
 
     if (alarmConfig.ledEnabled && ledController) {
-        GPIOPin A0Pin(A0);
-        GPIOPin A1Pin(A1);
-        GPIOPin A2Pin(A2);
         
-        if (ledController->setLED(A0Pin, A1Pin, A2Pin, alarmConfig.ledDayOfWeek)) {
+        if (ledController->setLED(alarmConfig.ledDayOfWeek)) {
             std::cout << "Alarm: LED activated (day " << alarmConfig.ledDayOfWeek << ")" << std::endl;
         }
     }
@@ -147,11 +145,12 @@ void alarmManager::triggerAlarmActions() {
     }
     
     // Pillbox
-    if (alarmConfig.pillboxEnabled && pillboxController) {
-        if (pillboxController->openPillbox()) {
-            std::cout << "Alarm: Pillbox open" << std::endl;
-        }
-    }
+    
+    // if (alarmConfig.pillboxEnabled && pillboxController) {
+    //     if (pillboxController->openPillbox()) {
+    //         std::cout << "Alarm: Pillbox open" << std::endl;
+    //     }
+    // }
 }
 
 void alarmManager::clearAlarmActions() {
@@ -159,10 +158,7 @@ void alarmManager::clearAlarmActions() {
     
     // Turn off LED
     if (ledController) {
-        GPIOPin A0Pin(A0);
-        GPIOPin A1Pin(A1);
-        GPIOPin A2Pin(A2);
-        ledController->turnOff(A0Pin, A1Pin, A2Pin);
+        ledController->turnOff();
     }
     
     // Turn off strobe
@@ -171,9 +167,10 @@ void alarmManager::clearAlarmActions() {
     }
     
     // Close pillbox
+    
     if (pillboxController) {
         pillboxController->closePillbox();
-    }
+    } 
 }
 
 // EVENT HANDLERS

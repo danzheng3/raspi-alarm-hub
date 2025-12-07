@@ -12,8 +12,8 @@ class LED {
         LED();
         ~LED();
 
-        bool setLED(GPIOPin A0Pin, GPIOPin A1Pin, GPIOPin A2Pin, int dayOfWeek);
-        bool turnOff(GPIOPin A0Pin, GPIOPin A1Pin, GPIOPin A2Pin);
+        bool setLED(int dayOfWeek);
+        bool turnOff();
 
     private:
         GPIOPin A0Pin;

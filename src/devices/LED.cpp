@@ -7,10 +7,10 @@ LED::LED() : A0Pin(A0), A1Pin(A1), A2Pin(A2) {
 }
 
 LED::~LED() {
-    turnOff(A0Pin, A1Pin, A2Pin);
+    turnOff();
 }
 
-bool LED::setLED(GPIOPin A0Pin, GPIOPin A1Pin, GPIOPin A2Pin, int dayOfWeek) {
+bool LED::setLED(int dayOfWeek) {
     // dayOfWeek is 0-6 for Sunday-Saturday
 
     bool a0State = dayOfWeek & 0x01;
@@ -38,7 +38,7 @@ bool LED::setLED(GPIOPin A0Pin, GPIOPin A1Pin, GPIOPin A2Pin, int dayOfWeek) {
     return true;
 }
 
-bool LED::turnOff(GPIOPin A0Pin, GPIOPin A1Pin, GPIOPin A2Pin) {
+bool LED::turnOff() {
     A0Pin.pinLow();
     A1Pin.pinLow();
     A2Pin.pinLow();

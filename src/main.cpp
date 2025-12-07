@@ -99,7 +99,6 @@ int main() {
             // Check if alarm should trigger
             if (alarmMgr.shouldTrigger()) {
                 std::cout << "\n🔔 ALARM! 🔔\n" << std::endl;
-                alarmMgr.resetTrigger();
             }
             
             std::this_thread::sleep_for(std::chrono::seconds(1));

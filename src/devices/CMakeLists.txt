@@ -10,4 +10,4 @@ add_library(devices
 find_library(PIGPIO_LIB pigpio)
 
 target_include_directories(devices PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(devices PUBLIC utils ${PIGPIO_LIB})
+target_link_libraries(devices PUBLIC utils hardware_layer ${PIGPIO_LIB})
