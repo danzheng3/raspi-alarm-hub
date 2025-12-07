@@ -109,15 +109,14 @@ bool alarmManager::shouldTrigger() {
     }
 
     std::string currentTime = timeMgr.getFormattedTime();
-    std::cout << "Checking alarm: current time " << currentTime << ", alarm time " << alarmTime << std::endl;
     if (currentTime == alarmTime) {
         std::cout << "Alarm triggered at " << currentTime << std::endl;
 
         alarmTriggered = true;
 
-        // std::thread([this]() {
-        //     triggerAlarmActions();
-        // }).detach();
+        std::thread([this]() {
+            triggerAlarmActions();
+        }).detach();
 
         if (alarmConfig.soundEnabled || alarmConfig.ledEnabled || alarmConfig.strobeEnabled || alarmConfig.pillboxEnabled) {
             if (m_eventBus) {
@@ -134,26 +133,25 @@ bool alarmManager::shouldTrigger() {
 void alarmManager::triggerAlarmActions() {
     std::cout << "Triggering alarm actions:" << std::endl;
     
-    // if (alarmConfig.ledEnabled && ledController) {
+    if (alarmConfig.ledEnabled && ledController) {
         
-    //     if (ledController->setLED(alarmConfig.ledDayOfWeek)) {
-    //         std::cout << "Alarm: LED activated (day " << alarmConfig.ledDayOfWeek << ")" << std::endl;
-    //     }
-    // }
+        if (ledController->setLED(alarmConfig.ledDayOfWeek)) {
+            std::cout << "Alarm: LED activated (day " << alarmConfig.ledDayOfWeek << ")" << std::endl;
+        }
+    }
 
-    // if (alarmConfig.strobeEnabled && strobeController) {
-    //     if (strobeController->strobeActivate()) {
-    //         std::cout << "Alarm: Strobe activated" << std::endl;
-    //     }
-    // }
+    if (alarmConfig.strobeEnabled && strobeController) {
+        if (strobeController->strobeActivate()) {
+            std::cout << "Alarm: Strobe activated" << std::endl;
+        }
+    }
     
-    // Pillbox
     
-    // if (alarmConfig.pillboxEnabled && pillboxController) {
-    //     if (pillboxController->openPillbox()) {
-    //         std::cout << "Alarm: Pillbox open" << std::endl;
-    //     }
-    // }
+    if (alarmConfig.pillboxEnabled && pillboxController) {
+        if (pillboxController->openPillbox()) {
+            std::cout << "Alarm: Pillbox open" << std::endl;
+        }
+    }
 }
 
 void alarmManager::clearAlarmActions() {

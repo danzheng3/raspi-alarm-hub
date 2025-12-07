@@ -1,8 +1,9 @@
 echo "Building Raspi-Alarm-Hub"
-rm -rf build
+sudo rm -rf build
 mkdir -p build
 cd build
 cmake ..
 make
 cd src
-./Raspi-Alarm-Hub
+echo "Executing Raspi-Alarm-Hub"
+sudo -E ./Raspi-Alarm-Hub > ../../outputLog.txt 2>&1

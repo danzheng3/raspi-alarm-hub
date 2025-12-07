@@ -146,9 +146,10 @@ struct tm timeManager::getCurrentTime() const {
 void timeManager::checkAndPublishTimeUpdate() {
     std::string currentTime = getFormattedTime();
     if (currentTime != lastPublishedTime) {
-        lastPublishedTime = currentTime;
         std::cout << "[Time Manager]: Time changed from " << lastPublishedTime 
                   << " to " << currentTime << " - Publishing Event" << std::endl;
+        lastPublishedTime = currentTime;
+        
         if (m_eventBus) {
             TimeUpdatedEvent event;
             event.currentTime = currentTime;

@@ -172,7 +172,6 @@ void DisplayManager::onWifiStatusChanged(const WifiStatusChangedEvent& event) {
 void DisplayManager::onWeatherUpdated(const WeatherUpdatedEvent& event) {
     std::cout << "DisplayManager: Weather updated: " << event.temperature 
               << "°, " << event.condition << std::endl;
-    std::lock_guard<std::mutex> lock(stateMutex);
     setState(m_temperature, event.temperature);
     setState(m_weatherCondition, event.condition);
     // Update weather display
