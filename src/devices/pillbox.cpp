@@ -12,7 +12,6 @@ pillbox::pillbox() {
 
 pillbox::~pillbox() {
     gpioServo(PILLBOX_PWM_PIN, 0);
-    gpioTerminate();
 }
 
 bool pillbox::openPillbox() {

@@ -22,6 +22,10 @@ const std::string I2C_BUS_PATH = "/dev/i2c-1";
 std::atomic<bool> running(true);
 
 int main() {
+    if (gpioInitialise() < 0) {
+        std::cerr << "Failed to initialize GPIO" << std::endl;
+        return 1;
+    }
     EventBus eventBus;
     std::cout << "eventBus Created" << std::endl;
 
@@ -112,7 +116,7 @@ int main() {
     if (logicThread.joinable()) {
         logicThread.join();
     }
-    
+    gpioTerminate();
     std::cout << "Goodbye!" << std::endl;
     return 0;
 }
