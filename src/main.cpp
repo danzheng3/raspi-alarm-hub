@@ -23,29 +23,24 @@ const std::string I2C_BUS_PATH = "/dev/i2c-1";
 std::atomic<bool> running(true);
 
 int main() {
-    // if (gpioInitialise() < 0) {
-    //     std::cerr << "Failed to initialize GPIO" << std::endl;
-    //     return 1;
-    // }
-    // std::cout << "eventBus Created" << std::endl;
+    if (gpioInitialise() < 0) {
+        std::cerr << "Failed to initialize GPIO" << std::endl;
+        return 1;
+    }
+    std::cout << "eventBus Created" << std::endl;
 
     storageManager storage;
     storage.load();
 
 
-    // auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
-    // std::cout << "I2C initialized " << std::endl;
+    auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
+    std::cout << "I2C initialized " << std::endl;
 
-    // auto rtc = std::make_shared<MCP7940N>(bus);
-    // std::cout << "RTC initialized " << std::endl;
+    auto rtc = std::make_shared<MCP7940N>(bus);
+    std::cout << "RTC initialized " << std::endl;
 
-    // auto adc = std::make_shared<MCP3021>(bus); 
-    // std::cout << "ADC initialized " << std::endl;
-
-    //testing
-    auto bus = nullptr;
-    auto rtc = nullptr;
-    auto adc = nullptr;
+    auto adc = std::make_shared<MCP3021>(bus); 
+    std::cout << "ADC initialized " << std::endl;
 
 
     EventBus eventBus;
