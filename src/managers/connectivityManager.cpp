@@ -4,6 +4,11 @@
 connectivityManager::connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdapter& btAdapter, storageManager& storage, EventBus* eventBus)
     : wifiAdapter(wifiAdapter), btAdapter(btAdapter), storage(storage), m_eventBus(eventBus) {
         init();
+        dockDetectPin = std::make_unique<GPIOPin>(27);
+        dockDetectPin->pinModeIn(GPIOBias::PULL_UP);
+
+        std::cout << "[connMgr] Pin27 dock detection initialized" << std::endl;
+
 }
 
 void connectivityManager::loadCredentials() {
@@ -126,4 +131,30 @@ void connectivityManager::disconnectBluetooth() {
 
 bool connectivityManager::isBluetoothConnected() {
     return btAdapter.isConnected();
+}
+
+
+void connectivityManager::checkDockStatus() {
+    if (!dockDetectPin) return;
+
+    // READ: 0 = Connected (Grounded), 1 = Disconnected (Pulled Up)
+    bool physicallyConnected = (dockDetectPin->pinRead() == 0);
+
+    if (physicallyConnected != isDocked) {
+        isDocked = physicallyConnected;
+        
+        if (isDocked) {
+            std::cout << "[connMgr] Docking: Speaker CONNECTED (Handshake detected)" << std::endl;
+            if (m_eventBus) {
+                SpeakerDockedEvent event;
+                m_eventBus->publish(event);
+            }
+        } else {
+            std::cout << "[connMgr] Docking: Speaker DISCONNECTED" << std::endl;
+            if (m_eventBus) {
+                SpeakerUndockedEvent event;
+                m_eventBus->publish(event);
+            }
+        }
+    }
 }

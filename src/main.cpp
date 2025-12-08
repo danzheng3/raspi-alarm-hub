@@ -15,6 +15,7 @@
 #include <chrono>
 #include <atomic>
 
+
 const std::string I2C_BUS_PATH = "/dev/i2c-1";
 
 
@@ -22,25 +23,32 @@ const std::string I2C_BUS_PATH = "/dev/i2c-1";
 std::atomic<bool> running(true);
 
 int main() {
-    if (gpioInitialise() < 0) {
-        std::cerr << "Failed to initialize GPIO" << std::endl;
-        return 1;
-    }
-    EventBus eventBus;
-    std::cout << "eventBus Created" << std::endl;
+    // if (gpioInitialise() < 0) {
+    //     std::cerr << "Failed to initialize GPIO" << std::endl;
+    //     return 1;
+    // }
+    // std::cout << "eventBus Created" << std::endl;
 
     storageManager storage;
     storage.load();
 
 
-    auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
-    std::cout << "I2C initialized " << std::endl;
+    // auto bus = std::make_shared<I2CBus>(I2C_BUS_PATH);
+    // std::cout << "I2C initialized " << std::endl;
 
-    auto rtc = std::make_shared<MCP7940N>(bus);
-    std::cout << "RTC initialized " << std::endl;
+    // auto rtc = std::make_shared<MCP7940N>(bus);
+    // std::cout << "RTC initialized " << std::endl;
 
-    auto adc = std::make_shared<MCP3021>(bus); 
-    std::cout << "ADC initialized " << std::endl;
+    // auto adc = std::make_shared<MCP3021>(bus); 
+    // std::cout << "ADC initialized " << std::endl;
+
+    //testing
+    auto bus = nullptr;
+    auto rtc = nullptr;
+    auto adc = nullptr;
+
+
+    EventBus eventBus;
 
     timeManager timeMgr(storage, rtc, &eventBus);
     std::cout << "TimeMgr: " << timeMgr.getFormattedTime() << std::endl;
@@ -84,6 +92,7 @@ int main() {
 
 
     DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &audioMgr, &weatherMgr, &eventBus);
+
     std::cout << "DisplayManager initialized" << std::endl;
 
     equalizerManager eqMgr(bus, storage, &eventBus);
@@ -93,19 +102,21 @@ int main() {
     std::cout << "System ready!" << std::endl;
     std::cout << "========================================\n" << std::endl;
 
-    //return 0;
-    // finish for now
 
     std::thread logicThread([&]() {
         while (running) {
             timeMgr.checkAndPublishTimeUpdate();
+
+            // -- hardware check --
+            connMgr.checkDockStatus();
+            alarmMgr.checkPhysicalControls();
             
             // Check if alarm should trigger
             if (alarmMgr.shouldTrigger()) {
                 std::cout << "\n🔔 ALARM! 🔔\n" << std::endl;
             }
             
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     });
 

@@ -1,4 +1,5 @@
 #include "managers/alarmManager.h"
+#include "hardware_layer/GPIO.h"
 #include <iostream>
 
 alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventBus* eventBus) 
@@ -13,6 +14,15 @@ alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventB
     if (m_eventBus) {
         m_eventBus->subscribe<UIStopAlarmPressedEvent>(this, &alarmManager::onUIStopAlarmPressed);
     }
+
+    // GPIO 16: Reset Button (Push button, normally open)
+    resetButton = std::make_unique<GPIOPin>(16);
+    resetButton->pinModeIn(GPIOBias::PULL_UP); // Pressed = LOW
+    
+    // on = low (assume switch connects to ground?)
+    enableSwitch = std::make_unique<GPIOPin>(17);
+    enableSwitch->pinModeIn(GPIOBias::PULL_UP);
+
 
     std::cout << "alarmManager initialized" << std::endl;
     std::cout << "  Alarm time: " << alarmTime << std::endl;
@@ -176,6 +186,32 @@ void alarmManager::clearAlarmActions() {
     } 
 }
 
+void alarmManager::checkPhysicalControls() {
+    bool currentResetState = resetButton->pinRead();
+
+    if (lastResetState == true && currentResetState == false) {
+        std::cout << "[Hardware] Alarm Reset Button Pressed" << std::endl;
+        
+        if (alarmTriggered) {
+            UIStopAlarmPressedEvent e; 
+            onUIStopAlarmPressed(e);
+        }
+    }
+    lastResetState = currentResetState;
+
+    //switch control
+    bool switchState = enableSwitch->pinRead();
+    bool shouldBeEnabled = (switchState == 0); 
+    
+    if (alarmEnabled != shouldBeEnabled) {
+        alarmEnabled = shouldBeEnabled;
+        std::cout << "[Hardware] Alarm Switch changed: " 
+                  << (alarmEnabled ? "ENABLED" : "DISABLED") << std::endl;
+                  
+        // [LATER] Publish event if UI needs to update switch icon
+    }
+}
+
 // EVENT HANDLERS
 
 void alarmManager::onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event) {
@@ -187,6 +223,18 @@ void alarmManager::onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event) {
     if (m_eventBus) {
         AlarmClearedEvent clearEvent;
         m_eventBus->publish(clearEvent);
+    }
+}
+
+void alarmManager::setAlarmEnabled(bool enabled) {
+    if (alarmEnabled != enabled) {
+        alarmEnabled = enabled;
+        std::cout << "Alarm manually " << (enabled ? "ENABLED" : "DISABLED") << " via switch." << std::endl;
+        
+        // If disabled, ensure any currently ringing alarm is cleared
+        if (!enabled && alarmTriggered) {
+            onUIStopAlarmPressed(UIStopAlarmPressedEvent{});
+        }
     }
 }
 

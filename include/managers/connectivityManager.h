@@ -6,6 +6,7 @@
 #include "storageManager.h"
 #include "events/EventBus.h"
 #include "events/Events.h"
+#include "hardware_layer/GPIO.h"
 
 class connectivityManager {
 public:
@@ -21,6 +22,7 @@ public:
 
     bool isWifiConnected();
     bool isBluetoothConnected();
+    void checkDockStatus();
 
 private:
     WifiAdapter& wifiAdapter;
@@ -35,5 +37,8 @@ private:
     void loadCredentials();
     void saveWifiCredentials(const std::string& ssid, const std::string& password);
     void saveBluetoothSpeakerID(const std::string& speakerID);
+
+    std::unique_ptr<GPIOPin> dockDetectPin;
+    bool isDocked=false;
 
 };

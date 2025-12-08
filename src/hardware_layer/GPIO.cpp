@@ -38,8 +38,25 @@ bool GPIOPin::pinModeOut() {
     return gpiod_line_request_output(line, "my_gpio", 0) == 0;
 }
 
-bool GPIOPin::pinModeIn() {
-    return gpiod_line_request_input(line, "my_gpio") == 0;
+bool GPIOPin::pinModeIn(GPIOBias bias) {
+    if (line) {
+        gpiod_line_release(line);
+    }
+    
+    struct gpiod_line_request_config config;
+    config.consumer = "RaspiAlarmHub";
+    config.request_type = GPIOD_LINE_REQUEST_DIRECTION_INPUT;
+    
+    // Set bias flags based on enum
+    config.flags = 0;
+    if (bias == GPIOBias::PULL_UP) {
+        config.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP;
+    } else if (bias == GPIOBias::PULL_DOWN) {
+        config.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
+    }
+
+    int ret = gpiod_line_request(line, &config, 0);
+    return ret == 0;
 }
 
 bool GPIOPin::pinRead() {

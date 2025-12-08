@@ -6,6 +6,7 @@
 #include "devices/LED.h"
 #include "devices/strobe.h"
 #include "devices/pillbox.h"
+#include "hardware_layer/GPIO.h"
 #pragma once
 
 struct AlarmConfig {
@@ -25,7 +26,10 @@ class alarmManager {
         void setAlarm(const std::string& time);
         std::string getAlarmTime() const { return alarmTime; }
         bool isAlarmEnabled() const;
+        void setAlarmEnabled(bool enabled); // DONE VIA GPIO SWITCH
 
+        void checkPhysicalControls();
+        
         void loadFromStorage();
         void saveToStorage();
 
@@ -53,6 +57,11 @@ class alarmManager {
         std::unique_ptr<LED> ledController;
         std::unique_ptr<strobe> strobeController;
         std::unique_ptr<pillbox> pillboxController;
+
+        //button switch for alarm state
+        std::unique_ptr<GPIOPin> resetButton; //16
+        std::unique_ptr<GPIOPin> enableSwitch; //17
+        bool lastResetState = true;
         
         // Actions
         void triggerAlarmActions();
