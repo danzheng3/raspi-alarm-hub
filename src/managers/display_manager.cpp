@@ -124,7 +124,9 @@ void DisplayManager::run(std::atomic<bool>& running) {
                     pwrMgr->registerActivity();
                 }
                 std::cout << "Touch detected at (" << event.tfinger.x << ", " << event.tfinger.y << ")" << std::endl;
-            } else if (currentPage) {
+            }
+            
+            if (currentPage) {
                 currentPage->handleEvent(event);
             }
         }
@@ -133,7 +135,7 @@ void DisplayManager::run(std::atomic<bool>& running) {
             currentPage->render(renderer);
         }
 
-        SDL_Delay(16);  // ~ 60 FPS
+        SDL_Delay(100);  // ~ 10 FPS
     }
 }
 

@@ -9,6 +9,11 @@ add_library(hardware_layer
 find_library(GPIOD_LIB gpiod)
 
 
+if(NOT TEST_MODE)
+    find_library(GPIOD_LIB gpiod)
+    target_link_libraries(hardware_layer PUBLIC utils gpiod)
+else()
+    target_link_libraries(hardware_layer PUBLIC utils)
+endif()
+
 target_include_directories(hardware_layer PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(hardware_layer PUBLIC ${PROJECT_SOURCE_DIR}/include/hardware_layer)
-target_link_libraries(hardware_layer PUBLIC utils gpiod)

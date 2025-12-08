@@ -127,7 +127,10 @@ int main() {
     if (logicThread.joinable()) {
         logicThread.join();
     }
+
+    #ifndef TEST_MODE
     gpioTerminate();
+    #endif
     std::cout << "Goodbye!" << std::endl;
     return 0;
 }

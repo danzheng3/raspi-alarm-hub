@@ -6,6 +6,7 @@
 #include <vector>
 #include <filesystem>
 #include <algorithm>
+#include <atomic>
 #include "managers/connectivityManager.h"
 #include "events/EventBus.h"
 #include "events/Events.h"
@@ -43,6 +44,9 @@ class audioManager {
         void setVolume(int volume); // 0-100%
 
         void alarmRing();
+
+        std::thread monitorThread;
+        std::atomic<bool> monitorActive{false};
 
     private:
         std::string runCommand(const std::string& command);

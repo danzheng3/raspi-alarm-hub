@@ -88,15 +88,18 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
             return false;
         }
         auto current = json["current"];
+        {
+            std::lock_guard<std::mutex> lock(dataMutex);
 
-        currentWeather.temperature = current.value("temperature_2m", 0.0);
-        currentWeather.weatherCode = current.value("weather_code", 0); 
-        currentWeather.humidity = current.value("relative_humidity_2m", 0);
-        currentWeather.windSpeed = current.value("wind_speed_10m", 0.0);
-        currentWeather.precipitation = current.value("precipitation", 0.0);
-        
-        currentWeather.condition = weatherCodeToString(currentWeather.weatherCode);
-        currentWeather.valid = true;
+            currentWeather.temperature = current.value("temperature_2m", 0.0);
+            currentWeather.weatherCode = current.value("weather_code", 0); 
+            currentWeather.humidity = current.value("relative_humidity_2m", 0);
+            currentWeather.windSpeed = current.value("wind_speed_10m", 0.0);
+            currentWeather.precipitation = current.value("precipitation", 0.0);
+            
+            currentWeather.condition = weatherCodeToString(currentWeather.weatherCode);
+            currentWeather.valid = true;
+        }
 
         if (m_eventBus) {
             WeatherUpdatedEvent event;
@@ -106,7 +109,7 @@ bool weatherManager::parseWeatherResponse(const std::string& response) {
         }
 
         std::cout << "Weather updated: " << currentWeather.temperature << "F, " 
-                  << currentWeather.condition << std::endl;
+                  << currentWeather.condition << " " << currentWeather.weatherCode << std::endl;
 
         return true;
 

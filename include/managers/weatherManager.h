@@ -6,6 +6,7 @@
 #include "events/EventBus.h"
 #include "events/Events.h"
 #include "storageManager.h"
+#include <mutex>
 
 // Weather code mapping for Open-Meteo
 enum class WeatherCode {
@@ -59,7 +60,10 @@ public:
     bool fetchWeatherByCity(const std::string& city);
     
     // Get cached weather data
-    WeatherData getWeatherData() const { return currentWeather; }
+    WeatherData getWeatherData() { 
+        std::lock_guard<std::mutex> lock(dataMutex);
+        return currentWeather; 
+    }
     
     // Auto-update weather at regular intervals
     void startAutoUpdate(int intervalMinutes = 30);
@@ -75,15 +79,14 @@ private:
     std::atomic<bool> autoUpdateEnabled;
     std::thread updateThread;
     
-    // libcurl callback
     static size_t writeCallback(void* contents, size_t size, size_t nmemb, std::string* userp);
     
-    // Parse JSON response
     bool parseWeatherResponse(const std::string& response);
     
     // Convert weather code to human-readable string
     std::string weatherCodeToString(int code) const;
     
-    // Geocoding helper
-    bool geocodeCity(const std::string& city, double& lat, double& lon);
+
+
+    std::mutex dataMutex;
 };

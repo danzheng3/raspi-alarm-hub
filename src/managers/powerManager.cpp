@@ -243,6 +243,8 @@ void powerManager::fadeLoop() {
         }
 
         // Write to Hardware File
+
+        #ifndef TEST_MODE 
         std::ofstream file(BACKLIGHT_PATH);
         if (file.is_open()) {
             file << current;
@@ -252,9 +254,12 @@ void powerManager::fadeLoop() {
             std::cerr << "Failed to write to backlight file" << std::endl;
         }
 
+        #else
+
         // Sleep 40ms (Constant Rate)
         // 31 steps * 40ms = ~1.2 seconds for full fade
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        #endif
     }
 }
 

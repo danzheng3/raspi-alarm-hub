@@ -20,6 +20,10 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
 
 audioManager::~audioManager() {
     stop();
+    monitorActive = false;
+    if (monitorThread.joinable()) {
+        monitorThread.join();
+    }
 }
 
 
@@ -55,6 +59,8 @@ void audioManager::playSongAtIndex(size_t index) {
     }
     
     stop();
+    monitorActive = false;
+    if (monitorThread.joinable()) monitorThread.join();
     currentIndex = index;
     
     const Song& song = songList[index];
@@ -72,23 +78,22 @@ void audioManager::playSongAtIndex(size_t index) {
     system(command.c_str());
     
     currentState = AudioState::PLAYING;
+    monitorActive = true;
     std::cout << "Playing: " << song.title << std::endl;
     
     // Start background thread to monitor song completion
-    std::thread([this]() {
+    monitorThread = std::thread([this]() {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         
-        while (currentState == AudioState::PLAYING) {
-            // Check if mpg123 is still running
+        while (currentState == AudioState::PLAYING && monitorActive) {
             std::string result = runCommand("pgrep mpg123");
             if (result.empty()) {
-                // Song finished, play next
                 playNextSong();
                 break;
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-    }).detach();
+    });
 }
 
 void audioManager::playNextSong() {

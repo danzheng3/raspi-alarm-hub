@@ -62,7 +62,7 @@ void MainPage::render(SDL_Renderer* renderer) {
     
     // WiFi status (left side of status bar)
     std::string wifiStatus = connMgr ? 
-        (connMgr->isWifiConnected() ? "WiFi ✓" : "WiFi ✗") : "WiFi ?";
+        (connMgr->isWifiConnected() ? "WiFi Connected" : "WiFi Disconnected") : "WiFi ?";
     renderText(renderer, wifiStatus, 20, 15, 
                connMgr && connMgr->isWifiConnected() ? accent : dimGray, tinyFont);
     
@@ -114,7 +114,7 @@ void MainPage::render(SDL_Renderer* renderer) {
             
             // Temperature
             std::ostringstream tempStr;
-            tempStr << (int)weather.temperature << "°F";
+            tempStr << (int)weather.temperature << " F";
             renderText(renderer, tempStr.str(), weatherRect.x + 170, weatherRect.y + 40, 
                        white, smallFont);
             

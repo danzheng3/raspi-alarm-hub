@@ -2,6 +2,9 @@
 #include <cstring>
 #include <iostream>
 
+#ifndef TEST_MODE
+
+
 GPIOPin::GPIOPin(int pin) : pinNumber(pin) {
     chip = gpiod_chip_open_by_name("gpiochip0"); // MOST LIKELY NEED TO MODIFY BASED ON CHIPNUM
     line = gpiod_chip_get_line(chip, pinNumber);
@@ -62,3 +65,24 @@ bool GPIOPin::pinModeIn(GPIOBias bias) {
 bool GPIOPin::pinRead() {
     return gpiod_line_get_value(line) == 1;
 }
+
+#else
+
+// --- MOCK IMPLEMENTATION ---
+GPIOPin::GPIOPin(int pin) : pinNumber(pin) {
+    std::cout << "[Mock] GPIO " << pin << " Initialized" << std::endl;
+}
+GPIOPin::~GPIOPin() {}
+
+bool GPIOPin::pinHigh() {
+    std::cout << "[Mock] GPIO " << pinNumber << " HIGH" << std::endl;
+    return true;
+}
+bool GPIOPin::pinLow() {
+    std::cout << "[Mock] GPIO " << pinNumber << " LOW" << std::endl;
+    return true;
+}
+bool GPIOPin::pinModeOut() { return true; }
+bool GPIOPin::pinModeIn(GPIOBias bias) { return true; }
+bool GPIOPin::pinRead() { return false; } // Default to 0 (Low)
+#endif

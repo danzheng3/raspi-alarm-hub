@@ -12,7 +12,7 @@ bool storageManager::load() {
         data_ = {
             {"alarm_time", "07:00"},
             {"rtc_time", "12:00"},
-            {"wifi_credentials", {{"ssid", "iPhone"}, {"password", "oneoneSeven"}}}
+            {"wifi_credentials", { {{"ssid", "iPhone"}, {"password", "oneoneSeven"}} } }
         };
         std::cout << "no config file found using defaults" << std::endl;
         return false;

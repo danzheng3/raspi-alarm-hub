@@ -1,5 +1,8 @@
 #include "devices/pillbox.h"
 
+
+#ifndef TEST_MODE 
+
 pillbox::pillbox() {
     if (gpioInitialise() < 0) {
         std::cerr << "failed to initialize pigpio. check daemon" << std::endl;\
@@ -44,3 +47,20 @@ bool pillbox::closePillbox() {
     pillboxState = false;
     return true;
 }
+
+#else
+// Mock Pillbox
+pillbox::pillbox() { std::cout << "[Mock] Pillbox Initialized" << std::endl; }
+pillbox::~pillbox() {}
+bool pillbox::openPillbox() { 
+    std::cout << "[Mock] Pillbox Opening..." << std::endl; 
+    pillboxState = true; 
+    return true; 
+}
+bool pillbox::closePillbox() { 
+    std::cout << "[Mock] Pillbox Closing..." << std::endl; 
+    pillboxState = false; 
+    return true; 
+}
+
+#endif
