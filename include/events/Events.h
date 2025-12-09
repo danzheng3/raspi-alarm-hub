@@ -46,6 +46,8 @@ struct WeatherUpdatedEvent {
     std::string condition;
 };
 
+struct SystemWakeEvent {};
+
 
 struct ScreenBrightnessChanged {
     int brightness;  // 0-100

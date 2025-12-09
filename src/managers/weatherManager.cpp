@@ -151,11 +151,11 @@ std::string weatherManager::weatherCodeToString(int code) const {
     WeatherCode wCode = static_cast<WeatherCode>(code);
     switch (wCode) {
         case WeatherCode::CLEAR_SKY:
-            return "CLEAR_SKY";
+            return "CLEAR SKY";
         case WeatherCode::MAINLY_CLEAR:
-            return "MAINLY_CLEAR";
+            return "MAINLY CLEAR";
         case WeatherCode::PARTLY_CLOUDY:
-            return "PARTLY_CLOUDY";
+            return "PARTLY CLOUDY";
         case WeatherCode::OVERCAST:
             return "OVERCAST";
         case WeatherCode::FOG:
@@ -163,33 +163,33 @@ std::string weatherManager::weatherCodeToString(int code) const {
         case WeatherCode::DEPOSITING_RIME_FOG:
             return "DEPOSITING_RIME_FOG";
         case WeatherCode::DRIZZLE_LIGHT:
-            return "DRIZZLE_LIGHT";
+            return "DRIZZLE LIGHT";
         case WeatherCode::DRIZZLE_MODERATE:
-            return "DRIZZLE_MODERATE";
+            return "DRIZZLE MODERATE";
         case WeatherCode::DRIZZLE_DENSE:
-            return "DRIZZLE_DENSE";
+            return "DRIZZLE DENSE";
         case WeatherCode::FREEZING_DRIZZLE_LIGHT:
             return "FREEZING_DRIZZLE_LIGHT";
         case WeatherCode::FREEZING_DRIZZLE_DENSE:
             return "FREEZING_DRIZZLE_DENSE";
         case WeatherCode::RAIN_SLIGHT:
-            return "RAIN_SLIGHT";
+            return "RAIN SLIGHT";
         case WeatherCode::RAIN_MODERATE:
-            return "RAIN_MODERATE";
+            return "RAIN MODERATE";
         case WeatherCode::RAIN_HEAVY:
-            return "RAIN_HEAVY";
+            return "RAIN HEAVY";
         case WeatherCode::FREEZING_RAIN_LIGHT:
             return "FREEZING_RAIN_LIGHT";
         case WeatherCode::FREEZING_RAIN_HEAVY:
             return "FREEZING_RAIN_HEAVY";
         case WeatherCode::SNOW_SLIGHT:
-            return "SNOW_SLIGHT";
+            return "SNOW SLIGHT";
         case WeatherCode::SNOW_MODERATE:
-            return "SNOW_MODERATE";
+            return "SNOW MODERATE";
         case WeatherCode::SNOW_HEAVY:
-            return "SNOW_HEAVY";
+            return "SNOW HEAVY";
         case WeatherCode::SNOW_GRAINS:
-            return "SNOW_GRAINS";
+            return "SNOW GRAINS";
         case WeatherCode::RAIN_SHOWERS_SLIGHT:
             return "RAIN_SHOWERS_SLIGHT";
         case WeatherCode::RAIN_SHOWERS_MODERATE:

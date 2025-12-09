@@ -12,7 +12,7 @@
 #include "events/Events.h"
 #pragma once
 
-#define ALARM_RING_PATH "../../images/alarm.mp3"
+#define ALARM_RING_PATH "/home/daniel/Downloads/raspi-alarm-hub/images/alarm.mp3"
 
 struct Song {
     std::string title;
@@ -43,7 +43,7 @@ class audioManager {
         AudioState getState();
         void setVolume(int volume); // 0-100%
 
-        void alarmRing();
+        void alarmRing(const std::string& customPath = "");
 
         std::thread monitorThread;
         std::atomic<bool> monitorActive{false};

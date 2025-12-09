@@ -36,11 +36,13 @@ class timeManager {
         std::shared_ptr<MCP7940N> shared_rtc;
         EventBus* m_eventBus;
 
+        void onSystemWake(const SystemWakeEvent& event);
         struct tm getSystemTime() const; // struct to help get system time
         RTC_Time tmToRtc(const struct tm& time) const;
         struct tm rtcToTm(const RTC_Time& rtcTime) const;
 
         bool setSystemTime(const struct tm& time);
+        std::chrono::steady_clock::time_point lastNtpSyncTime;
 
 
 };

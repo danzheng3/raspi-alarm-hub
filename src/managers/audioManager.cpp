@@ -175,14 +175,20 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
     std::cout << "audioManager: volume set to " << volume << std::endl;
 } 
 
-void audioManager::alarmRing() {
+void audioManager::alarmRing(const std::string& customPath) {
     stop();
-    std::string command = "mpg123 -q --loop -1 '" + std::string(ALARM_RING_PATH) + "' > /dev/null 2>&1 &";
+    std::string path = (customPath.empty() || customPath == "default") ? std::string(ALARM_RING_PATH) : customPath;
+    std::cout << "path debug " << path << std::endl;
+    if (!std::filesystem::exists(path)) {
+        std::cout << "[audioMgr] custom audio path DNE" << std::endl;
+        path = std::string(ALARM_RING_PATH);
+    }
+    std::string command = "mpg123 -q --loop -1 '" + path + "' > /dev/null 2>&1 &";
     setVolume(100); // max volume for alarm
 
     system(command.c_str());
     currentState = AudioState::PLAYING;
-    std::cout << "audioManager: alarm ringing" << std::endl;
+    std::cout << "audioManager: alarm ringing using " << path << std::endl;
 }
 
 /*

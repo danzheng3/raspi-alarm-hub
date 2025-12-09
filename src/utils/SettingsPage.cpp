@@ -37,7 +37,7 @@ void SettingsPage::render(SDL_Renderer* renderer) {
     
     // Current status
     std::string status = connMgr && connMgr->isWifiConnected() ? 
-        "Connected ✓" : "Not Connected";
+        "Connected " : "Not Connected";
     renderText(renderer, status, 50, 160, 
                connMgr && connMgr->isWifiConnected() ? green : red, listFont);
     
@@ -136,6 +136,7 @@ void SettingsPage::handleEvent(const SDL_Event& e) {
         // Back button
         if (isPointInRect(x, y, backButton)) {
             // Return to main
+            request = PageType::MAIN;
             return;
         }
         

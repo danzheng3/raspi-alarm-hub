@@ -31,15 +31,15 @@ MainPage::~MainPage() {
 
 std::string MainPage::getWeatherIconPath(int weatherCode) {
     // Map weather codes to icon files
-    if (weatherCode == 0 || weatherCode == 1) return "../../images/sunny-weather.png";
-    if (weatherCode == 2 || weatherCode == 3) return "../../images/cloudy.png";
+    if (weatherCode == 0 || weatherCode == 1) return "/home/daniel/Downloads/raspi-alarm-hub/images/sunny-weather.png";
+    if (weatherCode == 2 || weatherCode == 3) return "/home/daniel/Downloads/raspi-alarm-hub/images/cloudy.png";
     //if (weatherCode >= 45 && weatherCode <= 48) return "../../images/fog.png"; // add if this becomes an issue
-    if (weatherCode >= 51 && weatherCode <= 67) return "../../images/rainy.png";
-    if (weatherCode >= 71 && weatherCode <= 77) return "../../images/snow_icon.png";
-    if (weatherCode >= 80 && weatherCode <= 82) return "../../images/rainy.png";
-    if (weatherCode >= 85 && weatherCode <= 86) return "../../images/snow_icon.png";
+    if (weatherCode >= 51 && weatherCode <= 67) return "/home/daniel/raspi-alarm-hub/images/rainy.png";
+    if (weatherCode >= 71 && weatherCode <= 77) return "/home/daniel/raspi-alarm-hub/images/snow_icon.png";
+    if (weatherCode >= 80 && weatherCode <= 82) return "/home/daniel/raspi-alarm-hub/images/rainy.png";
+    if (weatherCode >= 85 && weatherCode <= 86) return "/home/daniel/raspi-alarm-hub/images/snow_icon.png";
     //if (weatherCode >= 95) return "../../images/thunder.png"; // add if needed
-    return "../../images/cloudy.png"; // default
+    return "~/Downloads/raspi-alarm-hub/images/cloudy.png"; // default
 }
 
 void MainPage::render(SDL_Renderer* renderer) {
@@ -75,7 +75,9 @@ void MainPage::render(SDL_Renderer* renderer) {
     // Large time display (center-top)
     if (timeMgr) {
         std::string timeStr = timeMgr->getFormattedTime();
-        timeDisplayRect = {100, 100, 520, 150};
+        int boxWidth = 520;
+        int boxX = (720 - boxWidth) / 2;
+        timeDisplayRect = {boxX, 100, boxWidth, 150};
         
         // Semi-transparent background
         SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
@@ -87,14 +89,17 @@ void MainPage::render(SDL_Renderer* renderer) {
             SDL_RenderDrawRect(renderer, &outline);
         }
         
-        renderText(renderer, timeStr, 180, 130, white, font);
+        
+        renderCenteredText(renderer, timeStr, 130, white, font);    
     }
     
     // Weather display (center)
     if (weatherMgr) {
         WeatherData weather = weatherMgr->getWeatherData();
         if (weather.valid) {
-            weatherRect = {200, 300, 320, 200};
+            int weatherBoxWidth = 320;
+            int weatherBoxX = (720 - weatherBoxWidth) / 2;
+            weatherRect = {weatherBoxX, 300, weatherBoxWidth, 200};
             
             SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
             SDL_RenderFillRect(renderer, &weatherRect);
@@ -102,25 +107,29 @@ void MainPage::render(SDL_Renderer* renderer) {
             SDL_RenderDrawRect(renderer, &weatherRect);
             
             // Weather icon
+            int iconSize = 80;
+            int iconX = weatherRect.x + (weatherRect.w - iconSize) / 2;
+            int iconY = weatherRect.y + 15; // 15px padding from top
+
             std::string iconPath = getWeatherIconPath(weather.weatherCode);
             SDL_Surface* iconSurface = IMG_Load(iconPath.c_str());
             if (iconSurface) {
                 SDL_Texture* iconTexture = SDL_CreateTextureFromSurface(renderer, iconSurface);
-                SDL_Rect iconRect = {weatherRect.x + 40, weatherRect.y + 20, 100, 100};
+                SDL_Rect iconRect = {iconX, iconY, iconSize, iconSize};
                 SDL_RenderCopy(renderer, iconTexture, nullptr, &iconRect);
                 SDL_DestroyTexture(iconTexture);
                 SDL_FreeSurface(iconSurface);
+            } else {
+                std::cerr << "[DisplayMgr] weather icon surface fail: " << IMG_GetError()  << std::endl;
             }
             
             // Temperature
             std::ostringstream tempStr;
             tempStr << (int)weather.temperature << " F";
-            renderText(renderer, tempStr.str(), weatherRect.x + 170, weatherRect.y + 40, 
-                       white, smallFont);
+            renderCenteredText(renderer, tempStr.str(), weatherRect.y + 110, white, smallFont);
             
             // Condition
-            renderText(renderer, weather.condition, weatherRect.x + 20, weatherRect.y + 150, 
-                       lightGray, tinyFont);
+            renderCenteredText(renderer, weather.condition, weatherRect.y + 160, lightGray, tinyFont);
         }
     }
     
@@ -148,10 +157,10 @@ void MainPage::render(SDL_Renderer* renderer) {
     alarmButton = {spacing * 3 + btnW * 2, btnY, btnW, btnH};
     wifiButton = {spacing * 4 + btnW * 3, btnY, btnW, btnH};
     
-    renderIconButton(renderer, musicButton, "♪", "Music", accent);
-    renderIconButton(renderer, settingsButton, "⚙", "Settings", accent);
-    renderIconButton(renderer, alarmButton, "🔔", "Alarm", accent);
-    renderIconButton(renderer, wifiButton, "📡", "WiFi", accent);
+    renderIconButton(renderer, musicButton, "", "Music", accent);
+    renderIconButton(renderer, settingsButton, "", "Settings", accent);
+    renderIconButton(renderer, alarmButton, "", "Alarm", accent);
+    renderIconButton(renderer, wifiButton, "", "WiFi", accent);
     
     // Touch feedback
     if (touched) {
@@ -169,6 +178,24 @@ void MainPage::render(SDL_Renderer* renderer) {
     }
     
     SDL_RenderPresent(renderer);
+}
+
+void MainPage::renderCenteredText(SDL_Renderer* renderer, const std::string& text, int y, SDL_Color color, TTF_Font* font) {
+    if (!font || text.empty()) return;
+    
+    int w, h;
+    TTF_SizeText(font, text.c_str(), &w, &h);
+    
+    int x = (720 - w) / 2; // Center based on screen width of 720
+    
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+    if (surface) {
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_Rect rect = {x, y, w, h};
+        SDL_RenderCopy(renderer, texture, nullptr, &rect);
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+    }
 }
 
 void MainPage::renderIconButton(SDL_Renderer* renderer, const SDL_Rect& rect, 
@@ -219,6 +246,11 @@ void MainPage::handleEvent(const SDL_Event& e) {
                     std::string alarmTime = alarmMgr->getAlarmTime();
                     sscanf(alarmTime.c_str(), "%d:%d", &adjustedHour, &adjustedMinute);
                 }
+            }
+
+            if (isPointInRect(touchX, touchY, alarmButton)) {
+                pageChangeRequest = PageType::ALARMS; // Navigate to the new page
+                return;
             }
         } else {
             // Handle popup buttons (same as before)
@@ -271,13 +303,13 @@ void MainPage::renderAdjustPopup(SDL_Renderer* renderer, const std::string& titl
     SDL_Color black = {0, 0, 0, 255};
     SDL_Color white = {255, 255, 255, 255};
     
-    renderText(renderer, title, 250, 380, black, font);
+    renderCenteredText(renderer, title, 380, black, font);
 
     // Display current adjusted time in large format
     std::ostringstream timeDisplay;
     timeDisplay << std::setfill('0') << std::setw(2) << adjustedHour << ":"
                 << std::setfill('0') << std::setw(2) << adjustedMinute;
-    renderText(renderer, timeDisplay.str(), 240, 470, black, font);
+    renderCenteredText(renderer, timeDisplay.str(), 470, black, font);
 
     // Define button positions - larger and better spaced
     int btnWidth = 120;
@@ -307,15 +339,26 @@ void MainPage::renderAdjustPopup(SDL_Renderer* renderer, const std::string& titl
     SDL_RenderDrawRect(renderer, &MPlusRect);
     SDL_RenderDrawRect(renderer, &MMinusRect);
 
+    // Button internal labels (H+, M+, etc) - Centering these too
+    int w, h;
+    
+    // Helper to center text inside a rect
+    auto renderTextInRect = [&](const std::string& txt, const SDL_Rect& r, SDL_Color c, TTF_Font* f) {
+        TTF_SizeText(f, txt.c_str(), &w, &h);
+        renderText(renderer, txt, r.x + (r.w - w)/2, r.y + (r.h - h)/2, c, f);
+    };
+
     // Button labels
     renderText(renderer, "H+", HPlusRect.x + 35, HPlusRect.y + 20, white, smallFont);
     renderText(renderer, "H-", HMinusRect.x + 35, HMinusRect.y + 20, white, smallFont);
     renderText(renderer, "M+", MPlusRect.x + 35, MPlusRect.y + 20, white, smallFont);
     renderText(renderer, "M-", MMinusRect.x + 35, MMinusRect.y + 20, white, smallFont);
     
-    // Labels
-    renderText(renderer, "Hour", HPlusRect.x + 25, HPlusRect.y - 35, black, smallFont);
-    renderText(renderer, "Minute", MPlusRect.x + 10, MPlusRect.y - 35, black, smallFont);
+    TTF_SizeText(smallFont, "Hour", &w, &h);
+    renderText(renderer, "Hour", HPlusRect.x + (HPlusRect.w - w)/2, HPlusRect.y - 35, black, smallFont);
+
+    TTF_SizeText(smallFont, "Minute", &w, &h);
+    renderText(renderer, "Minute", MPlusRect.x + (MPlusRect.w - w)/2, MPlusRect.y - 35, black, smallFont);
 
     // Save and Cancel buttons
     SaveRect = { 120, 820, 200, 70 };

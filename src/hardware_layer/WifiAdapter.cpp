@@ -89,7 +89,6 @@ bool WifiAdapter::isConnected() {
     pclose(pipe2);
 
     cachedConnectionState = is_actually_connected;
-    std::cout << "[WifiAdapter] isConnected: " << (cachedConnectionState ? "true" : "false") << std::endl;
     
     return cachedConnectionState;
 }

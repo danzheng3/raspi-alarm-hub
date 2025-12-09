@@ -48,12 +48,6 @@ int main() {
     timeManager timeMgr(storage, rtc, &eventBus);
     std::cout << "TimeMgr: " << timeMgr.getFormattedTime() << std::endl;
 
-    alarmManager alarmMgr(storage, timeMgr, &eventBus);
-    if (alarmMgr.isAlarmEnabled()) {
-        std::cout << "Alarm: " << alarmMgr.getAlarmTime() << std::endl;
-    } else {
-        std::cout << "Alarm: Not set" << std::endl;
-    }
 
     WifiAdapter wifiAdapter;
     BluetoothAdapter btAdapter;
@@ -66,6 +60,13 @@ int main() {
         std::cout << "WiFi Connected: " << (connMgr.isWifiConnected() ? "Yes" : "No") << std::endl;
         std::cout << "Attempting NTP Sync..." << std::endl;
         timeMgr.trySyncFromNTP();
+    }
+
+    alarmManager alarmMgr(storage, timeMgr, connMgr, &eventBus);
+    if (alarmMgr.isAlarmEnabled()) {
+        std::cout << "Alarm: " << alarmMgr.getAlarmTime() << std::endl;
+    } else {
+        std::cout << "Alarm: Not set" << std::endl;
     }
 
     audioManager audioMgr(&connMgr, &eventBus);
@@ -85,12 +86,11 @@ int main() {
         weatherMgr.fetchWeather(40.4237, -86.9212);
     }).detach();
 
-
-    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &audioMgr, &weatherMgr, &eventBus);
+    equalizerManager eqMgr(bus, storage, &eventBus);
+    DisplayManager displayMgr(&timeMgr, &alarmMgr, &connMgr, &pwrMgr, &audioMgr, &weatherMgr, &eqMgr, &eventBus);
 
     std::cout << "DisplayManager initialized" << std::endl;
 
-    equalizerManager eqMgr(bus, storage, &eventBus);
    
 
     std::cout << "========================================" << std::endl;
@@ -104,11 +104,20 @@ int main() {
 
             // -- hardware check --
             connMgr.checkDockStatus();
-            alarmMgr.checkPhysicalControls();
+            //alarmMgr.checkPhysicalControls(); //UNCOMMENTED BC OF PHYSICAL RN
             
             // Check if alarm should trigger
             if (alarmMgr.shouldTrigger()) {
                 std::cout << "\n🔔 ALARM! 🔔\n" << std::endl;
+            }
+
+            if (pwrMgr.getCurrentState() != PowerState::ACTIVE && 
+                audioMgr.getState() == audioManager::AudioState::STOPPED) {
+                
+                if (connMgr.isBluetoothConnected()) {
+                    std::cout << "[System] Idle & Silent -> Disconnecting Bluetooth" << std::endl;
+                    connMgr.disconnectBluetooth();
+                }
             }
             
             std::this_thread::sleep_for(std::chrono::milliseconds(200));

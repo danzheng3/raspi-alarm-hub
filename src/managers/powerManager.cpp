@@ -55,6 +55,14 @@ void powerManager::transitionTo(PowerState newState) {
             } else {
                 currentBrightness = 100;
             }
+
+            if (oldState != PowerState::ACTIVE) {
+                if (m_eventBus) {
+                    SystemWakeEvent wakeEvent;
+                    m_eventBus->publish(wakeEvent);
+                    std::cout << "[pwrMgr] Publish systemWake event" << std::endl;
+                }
+            }
             break;
             
         case PowerState::DIMMED:
@@ -189,7 +197,6 @@ void powerManager::monitorLoop() {
             
             if (timeSinceCheck >= std::chrono::seconds(5)) {  // Check every 5 seconds
                 int ambientLight = readAmbientLight();
-                std::cout << "[PwrMgr] Ambient light: " << ambientLight << std::endl;
 
                 std::lock_guard<std::mutex> lock(stateMutex);
                 lastLightCheckTime = std::chrono::steady_clock::now();

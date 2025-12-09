@@ -19,6 +19,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+brightnessctl s 30
+export DISPLAY=:0
+export XAUTHORITY=/home/daniel/.Xauthority
+xhost +local:
 echo "Executing Raspi-Alarm-Hub (Output logged to ../outputLog.txt)"
 sudo -E ./src/Raspi-Alarm-Hub > ../outputLog.txt 2>&1
 

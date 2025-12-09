@@ -7,6 +7,7 @@
 #include "devices/strobe.h"
 #include "devices/pillbox.h"
 #include "hardware_layer/GPIO.h"
+#include "connectivityManager.h"
 #pragma once
 
 struct AlarmConfig {
@@ -15,12 +16,13 @@ struct AlarmConfig {
     bool strobeEnabled = false;
     bool pillboxEnabled = false;
     int ledDayOfWeek = 0;  // 0-6 for Monday-Sunday
+    std::string alarmAudioPath = "default";
 };
 
 
 class alarmManager {
     public:
-        alarmManager(storageManager& storage, timeManager& timeMgr, EventBus* eventBus);
+        alarmManager(storageManager& storage, timeManager& timeMgr, connectivityManager& connMgr, EventBus* eventBus);
         ~alarmManager();
 
         void setAlarm(const std::string& time);
@@ -44,6 +46,7 @@ class alarmManager {
     private:
         timeManager& timeMgr;
         storageManager& storage;
+        connectivityManager& connMgr;
         EventBus* m_eventBus;
 
         //alarm state
@@ -70,4 +73,5 @@ class alarmManager {
 
         // event handler
         void onUIStopAlarmPressed(const UIStopAlarmPressedEvent& event);
+        void onSpeakerDocked(const SpeakerDockedEvent& event);
 };

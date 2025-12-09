@@ -9,11 +9,14 @@ timeManager::timeManager(storageManager& storage, std::shared_ptr<MCP7940N> rtc_
         std::cout << "Time initialized from RTC: " << getFormattedTime() << std::endl;
     } else {
         std::cerr << "[Warning] Failed to sync from RTC (Battery dead or first boot)." << std::endl;
-        // Fallback: System time remains at default (1970/2000) until NTP kicks in
     }
 
     lastPublishedTime = getFormattedTime();
     std::cout << "timeManager initialized, current time: " << lastPublishedTime << std::endl;
+
+    if (m_eventBus) {
+        m_eventBus->subscribe<SystemWakeEvent>(this, &timeManager::onSystemWake);
+    }
 }
 
 timeManager::~timeManager() {
@@ -198,4 +201,26 @@ std::string timeManager::getFormattedDate(const char* format) const {
     char buffer[64];
     strftime(buffer, sizeof(buffer), format, &time);
     return std::string(buffer);
+}
+
+// EVENT HANDLER
+
+void timeManager::onSystemWake(const SystemWakeEvent& event) {
+    std::cout << "[TimeMgr] System woke up. Checking if NTP sync is needed..." << std::endl;
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::minutes>(now - lastNtpSyncTime).count();
+
+    // Only sync if it has been > 5 minutes (or never synced)
+    if (elapsed >= 5 || lastNtpSyncTime.time_since_epoch().count() == 0) {
+        //run in thread to avoid blocking
+        std::thread([this]() {
+            if (trySyncFromNTP()) {
+               lastNtpSyncTime = std::chrono::steady_clock::now();
+            }
+        }).detach();
+
+    } else {
+        std::cout << "[TimeMgr] Skipping NTP sync (synced " << elapsed << " mins ago)" << std::endl;
+    }
 }

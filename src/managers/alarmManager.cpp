@@ -2,8 +2,8 @@
 #include "hardware_layer/GPIO.h"
 #include <iostream>
 
-alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventBus* eventBus) 
-    : storage(storage), timeMgr(timeMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false) {
+alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, connectivityManager& connMgr, EventBus* eventBus) 
+    : storage(storage), timeMgr(timeMgr), connMgr(connMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false) {
     
     ledController = std::make_unique<LED>();
     strobeController = std::make_unique<strobe>();
@@ -13,6 +13,7 @@ alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, EventB
 
     if (m_eventBus) {
         m_eventBus->subscribe<UIStopAlarmPressedEvent>(this, &alarmManager::onUIStopAlarmPressed);
+        m_eventBus->subscribe<SpeakerDockedEvent>(this, &alarmManager::onSpeakerDocked);
     }
 
     // GPIO 16: Reset Button (Push button, normally open)
@@ -58,6 +59,7 @@ void alarmManager::loadFromStorage() {
             alarmConfig.strobeEnabled = json.value("strobe", false);
             alarmConfig.pillboxEnabled = json.value("pillbox", false);
             alarmConfig.ledDayOfWeek = json.value("led_day", 0);
+            alarmConfig.alarmAudioPath = json.value("alarm_audio_path", "default");
         }
     } catch (const std::exception& e) {
         std::cerr << "Error loading alarm config: " << e.what() << std::endl;
@@ -75,6 +77,8 @@ void alarmManager::saveToStorage() {
         json["strobe"] = alarmConfig.strobeEnabled;
         json["pillbox"] = alarmConfig.pillboxEnabled;
         json["led_day"] = alarmConfig.ledDayOfWeek;
+        json["alarm_audio_path"] = alarmConfig.alarmAudioPath;
+        std::cout << "saving alarm config: " << json.dump() << std::endl;
         
         storage.set("alarm_actions", json.dump());
     } catch (const std::exception& e) {
@@ -96,6 +100,8 @@ void alarmManager::setAlarm(const std::string& time) {
     alarmEnabled = true;
     alarmTriggered = false;
     std::cout << "set alarm " << alarmTime << std::endl;
+
+    saveToStorage();
 
     // publish event
     if (m_eventBus) {
@@ -191,11 +197,17 @@ void alarmManager::checkPhysicalControls() {
 
     if (lastResetState == true && currentResetState == false) {
         std::cout << "[Hardware] Alarm Reset Button Pressed" << std::endl;
-        
-        if (alarmTriggered) {
-            UIStopAlarmPressedEvent e; 
-            onUIStopAlarmPressed(e);
+
+        if (connMgr.isBluetoothConnected()) {
+            std::cout << "[AlarmMgr] button ignored (speaker connected)" << std::endl;
+        } else {
+            std::cout << "[AlarmMgr] processing alarm reset" << std::endl;
+            if (alarmTriggered) {
+                UIStopAlarmPressedEvent e; 
+                onUIStopAlarmPressed(e);
+            }
         }
+    
     }
     lastResetState = currentResetState;
 
@@ -238,4 +250,12 @@ void alarmManager::setAlarmEnabled(bool enabled) {
     }
 }
 
+void alarmManager::onSpeakerDocked(const SpeakerDockedEvent& event) {
+    if (alarmTriggered) {
+        std::cout << "[Alarm] Speaker Docked -> Stopping Alarm." << std::endl;
+        // Trigger the stop sequence
+        UIStopAlarmPressedEvent e; 
+        onUIStopAlarmPressed(e);
+    }
+}
 

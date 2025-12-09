@@ -16,21 +16,16 @@
 #include "managers/alarmManager.h"
 #include "managers/connectivityManager.h"
 #include "managers/weatherManager.h"
+#include "managers/equalizerManager.h"
 
 
-enum class PageType {
-    MAIN,
-    MUSIC,
-    SETTINGS,
-    ALARMS,
-    TIMESET
-};
 
 class DisplayManager {
     public:
         DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
                                 connectivityManager* connMgr, powerManager* pwrMgr, 
                                 audioManager* audioMgr, weatherManager* weatherMgr,
+                                equalizerManager* eqMgr,
                                 EventBus* eventBus);
         ~DisplayManager();
 
@@ -65,6 +60,7 @@ class DisplayManager {
         powerManager* pwrMgr;
         audioManager* audioMgr;
         weatherManager* weatherMgr;
+        equalizerManager* eqMgr;
 
         //event States. thread-safe
         std::mutex stateMutex;

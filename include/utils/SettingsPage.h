@@ -13,8 +13,13 @@ public:
     
     void render(SDL_Renderer* renderer) override;
     void handleEvent(const SDL_Event& event) override;
+    PageType getPageRequest() override { return request; }
+
+    
 
 private:
+    PageType request = PageType::NONE;
+
     connectivityManager* connMgr;
     
     TTF_Font* titleFont;

@@ -2,18 +2,18 @@
 #include "utils/MainPage.h"
 #include "utils/MusicPage.h"
 #include "utils/SettingsPage.h"
+#include "utils/AlarmPage.h"
 #include <managers/display_manager.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 
-
 DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr, 
                                 connectivityManager* connMgr, powerManager* pwrMgr, 
                                 audioManager* audioMgr, weatherManager* weatherMgr,
-                                EventBus* eventBus)
+                                equalizerManager* eqMgr, EventBus* eventBus)
     : timeMgr(timeMgr), alarmMgr(alarmMgr), connMgr(connMgr), 
-    pwrMgr(pwrMgr), audioMgr(audioMgr), weatherMgr(weatherMgr),
+    pwrMgr(pwrMgr), audioMgr(audioMgr), weatherMgr(weatherMgr), eqMgr(eqMgr),
     window(nullptr), renderer(nullptr), font(nullptr), 
     weatherIcon(nullptr), currentPage(nullptr), m_eventBus(eventBus)
 {
@@ -87,6 +87,11 @@ DisplayManager::~DisplayManager() {
 }
 
 void DisplayManager::changePage(PageType newPage) {
+    if (currentPageType == PageType::MUSIC && newPage != PageType::MUSIC) {
+        if (audioMgr) {
+            audioMgr->stop();
+        }
+    }
     if (currentPage) {
         delete currentPage;
         currentPage = nullptr;
@@ -99,10 +104,13 @@ void DisplayManager::changePage(PageType newPage) {
             currentPage = new MainPage(timeMgr, alarmMgr, connMgr, weatherMgr);
             break;
         case PageType::MUSIC:
-            currentPage = new MusicPage(audioMgr, m_eventBus);
+            currentPage = new MusicPage(audioMgr, eqMgr, m_eventBus);
             break;
         case PageType::SETTINGS:
             currentPage = new SettingsPage(connMgr);
+            break;
+        case PageType::ALARMS: // NEW
+            currentPage = new AlarmsPage(alarmMgr, audioMgr);
             break;
         default:
             currentPage = new MainPage(timeMgr, alarmMgr, connMgr, weatherMgr);
@@ -128,6 +136,10 @@ void DisplayManager::run(std::atomic<bool>& running) {
             
             if (currentPage) {
                 currentPage->handleEvent(event);
+                PageType request = currentPage->getPageRequest();
+                if (request != PageType::NONE) {
+                    changePage(request);
+                }
             }
         }
 
@@ -144,6 +156,11 @@ void DisplayManager::run(std::atomic<bool>& running) {
 void DisplayManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
     std::cout << "displaymanager: alarm triggered, show UI" << std::endl;
     setState(m_isAlarmActive, true);
+
+    if (pwrMgr) {
+        pwrMgr->wakeUp();
+    }
+
 
     // change UI, trigger
 }

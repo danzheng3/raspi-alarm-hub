@@ -19,7 +19,7 @@ class MainPage : public Page {
 public:
     MainPage(timeManager* timeMgr = nullptr, alarmManager* alarmMgr = nullptr, connectivityManager* connMgr = nullptr, weatherManager* weatherMgr = nullptr, powerManager* powerMgr = nullptr);
     ~MainPage();
-
+    virtual PageType getPageRequest() override { return pageChangeRequest; }
     void render(SDL_Renderer* renderer) override;
     SDL_Rect renderLabeledBox(SDL_Renderer* renderer, const std::string& text, int x, int y, bool drawBox, bool* wasTouched);
     void handleEvent(const SDL_Event& event) override;
@@ -31,6 +31,9 @@ private:
         ADJUST_TIME,
         ADJUST_ALARM
     };
+
+    PageType pageChangeRequest = PageType::NONE;
+
     timeManager* timeMgr;
     alarmManager* alarmMgr;
     connectivityManager* connMgr;
@@ -54,7 +57,7 @@ private:
 
     void renderText(SDL_Renderer* renderer, const std::string& text, int x, int y, SDL_Color color, TTF_Font* fontToUse);
     void renderAdjustPopup(SDL_Renderer* renderer, const std::string& title);
-
+    void renderCenteredText(SDL_Renderer* renderer, const std::string& text, int y, SDL_Color color, TTF_Font* font);
 
     bool isPointInRect(int x, int y, const SDL_Rect& rect);
     void drawCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius);
@@ -72,8 +75,6 @@ private:
                          SDL_Color color);
     void handlePopupButtons(int x, int y);
     std::string getWeatherIconPath(int weatherCode);
-
-    PageType pageChangeRequest = PageType::MAIN;
 
 
     SDL_Rect HPlusRect, HMinusRect, MPlusRect, MMinusRect;
