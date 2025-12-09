@@ -23,6 +23,7 @@ public:
     bool isWifiConnected();
     bool isBluetoothConnected();
     void checkDockStatus();
+    void checkConnectionStatus();
 
 private:
     WifiAdapter& wifiAdapter;

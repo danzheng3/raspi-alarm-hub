@@ -9,7 +9,10 @@
 
  // ALARM EVENTS
 
-struct AlarmTriggeredEvent {};
+struct AlarmTriggeredEvent {
+    std::string audioPath;
+    bool playAudio;
+};
 struct AlarmSetEvent{ std::string newTime; };
 struct AlarmClearedEvent {};
 

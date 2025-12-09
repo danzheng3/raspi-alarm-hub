@@ -124,15 +124,26 @@ void DisplayManager::run(std::atomic<bool>& running) {
     const Uint32 updateInterval = 1000; // update every second
 
     while (running) {
+        auto frameStart = std::chrono::high_resolution_clock::now();
+        bool inputDetected = false;
+
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             } else if (event.type == SDL_FINGERDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
+                inputDetected = true;
+
                 if (pwrMgr) {
                     pwrMgr->registerActivity();
                 }
                 std::cout << "Touch detected at (" << event.tfinger.x << ", " << event.tfinger.y << ")" << std::endl;
+            } else if (event.type == SDL_KEYDOWN) {
+            if (event.key.keysym.sym == SDLK_s) {
+                if (alarmMgr) {
+                    alarmMgr->simulateHardwareReset();
+                }
             }
+    }
             
             if (currentPage) {
                 currentPage->handleEvent(event);
@@ -145,9 +156,20 @@ void DisplayManager::run(std::atomic<bool>& running) {
 
         if (currentPage) {
             currentPage->render(renderer);
+
+            if (inputDetected) {
+                 auto renderDone = std::chrono::high_resolution_clock::now();
+                 auto totalLatency = std::chrono::duration_cast<std::chrono::milliseconds>(renderDone - frameStart).count();
+                 
+            }
+
         }
 
-        SDL_Delay(100);  // ~ 10 FPS
+        if (inputDetected) {
+            SDL_Delay(20); // 50 FPS
+        } else {
+            SDL_Delay(100); // 10 fps when idle
+        }
     }
 }
 

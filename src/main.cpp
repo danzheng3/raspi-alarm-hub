@@ -118,6 +118,7 @@ int main() {
                     std::cout << "[System] Idle & Silent -> Disconnecting Bluetooth" << std::endl;
                     connMgr.disconnectBluetooth();
                 }
+
             }
             
             std::this_thread::sleep_for(std::chrono::milliseconds(200));

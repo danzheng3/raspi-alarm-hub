@@ -199,7 +199,12 @@ EVENT HANDLERS
 
 void audioManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
     std::cout << "audioManager: alarm triggered event" << std::endl;
-    alarmRing();
+    if (event.playAudio) {
+        alarmRing(event.audioPath);
+        return;
+    } else {
+        std::cout << "[audioMgr]: alarm audio disabled, not ringing" << std::endl;
+    }
 }
 
 void audioManager::onAlarmCleared(const AlarmClearedEvent& event) {

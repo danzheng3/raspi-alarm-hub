@@ -39,6 +39,7 @@ class alarmManager {
         bool shouldTrigger();
         void resetTrigger();
 
+        void simulateHardwareReset(); 
         //configuration
         void setAlarmConfig(const AlarmConfig& config);
         AlarmConfig getAlarmConfig() const { return alarmConfig; }

@@ -27,16 +27,27 @@ powerManager::~powerManager() {
 }
 
 void powerManager::registerActivity() {
-    std::lock_guard<std::mutex> lock(stateMutex);   
-    lastActivityTime = std::chrono::steady_clock::now();
-    
-    // Wake up if dimmed or sleeping
-    if (currentState != PowerState::ACTIVE) {
+    bool needsWakeup = false;
+
+    {
+        std::lock_guard<std::mutex> lock(stateMutex);   
+        lastActivityTime = std::chrono::steady_clock::now();
+        
+        if (currentState != PowerState::ACTIVE) {
+            needsWakeup = true;
+        }
+    } 
+
+    if (needsWakeup) {
         wakeUp();
     }
 }
 
 void powerManager::wakeUp() {
+    {
+        std::lock_guard<std::mutex> lock(stateMutex);
+        lastActivityTime = std::chrono::steady_clock::now();
+    }
     transitionTo(PowerState::ACTIVE);
 }
 
@@ -114,7 +125,7 @@ void powerManager::enableAutoBrightness(bool enable) {
 }
 
 int powerManager::readAmbientLight() {
-    if (!lightSensor) return 512;  // Default mid-range
+    if (!lightSensor) return 50;  // Default mid-range
     
     uint16_t rawValue;
     if (lightSensor->readValue(rawValue)) {
@@ -202,12 +213,11 @@ void powerManager::monitorLoop() {
                 lastLightCheckTime = std::chrono::steady_clock::now();
                 int newBrightness = calculateBrightnessFromLight(ambientLight);
                 
-                // Only update if changed significantly (>5%)
                 if (abs(newBrightness - currentBrightness) > 5) {
                     currentBrightness = newBrightness;
                     std::cout << "[PwrMgr] Light Change. Changing brightness" << std::endl;
 
-                    // CHANGE BRIGHTNESS FX HERE?
+                    // CHANGE BRIGHTNESS FX
                     setTargetBrightness(currentBrightness);
                     
                     if (m_eventBus) {

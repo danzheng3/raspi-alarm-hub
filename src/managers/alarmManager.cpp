@@ -137,6 +137,10 @@ bool alarmManager::shouldTrigger() {
         if (alarmConfig.soundEnabled || alarmConfig.ledEnabled || alarmConfig.strobeEnabled || alarmConfig.pillboxEnabled) {
             if (m_eventBus) {
                 AlarmTriggeredEvent event;
+                event.playAudio = alarmConfig.soundEnabled;
+                if (alarmConfig.soundEnabled) {
+                    event.audioPath = alarmConfig.alarmAudioPath;
+                }
                 m_eventBus->publish(event);
             }
         }
@@ -259,3 +263,10 @@ void alarmManager::onSpeakerDocked(const SpeakerDockedEvent& event) {
     }
 }
 
+void alarmManager::simulateHardwareReset() {
+    std::cout << "[Simulation] Reset Button Signal Received via Software" << std::endl;
+    
+    // Reuse the existing internal logic for stopping the alarm
+    UIStopAlarmPressedEvent e; 
+    onUIStopAlarmPressed(e);
+}
