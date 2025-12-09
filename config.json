@@ -1,24 +1,18 @@
 {
-  "alarm_time": "10:18",
-  "rtc_time": "12:00",
-  "wifi_credentials": [
-    {
-      "ssid": "iPhone",
-      "password": "oneoneSeven"
-    }
-  ],
-  "alarm_actions": {
-    "sound": true,
-    "led": true,
-    "strobe": false,
-    "pillbox": true,
-    "led_day": 1
-  },
-  "weather_latitude": "40.4167",
-  "weather_longitude": "-86.8753",
-  "audio_settings": {
-    "default_volume": 50,
-    "alarm_volume": 100,
-    "play_mode": "normal"
-  }
+    "alarm_actions": "{\"alarm_audio_path\":\"default\",\"led\":false,\"led_day\":1,\"pillbox\":true,\"sound\":true,\"strobe\":true}",
+    "alarm_time": "23:33",
+    "audio_settings": {
+        "alarm_volume": 100,
+        "default_volume": 50,
+        "play_mode": "normal"
+    },
+    "rtc_time": "12:00",
+    "weather_latitude": "40.4167",
+    "weather_longitude": "-86.8753",
+    "wifi_credentials": [
+        {
+            "password": "oneoneSeven",
+            "ssid": "iPhone"
+        }
+    ]
 }
