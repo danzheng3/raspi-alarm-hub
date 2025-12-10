@@ -5,6 +5,8 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
     system("mkdir -p /mnt/sdcard");
     scanForSongs();
 
+    setVolume(20);
+
     if (m_eventBus) {
         m_eventBus->subscribe<AlarmTriggeredEvent>(this, &audioManager::onAlarmTriggered);
         m_eventBus->subscribe<AlarmClearedEvent>(this, &audioManager::onAlarmCleared);
