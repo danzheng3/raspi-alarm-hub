@@ -73,8 +73,7 @@ void connectivityManager::init() {
         std::string macForPulse = currentSpeakerID;
         std::replace(macForPulse.begin(), macForPulse.end(), ':', '_'); // Convert XX:XX to XX_XX
         
-        std::string checkCmd = "pactl list short sinks | grep " + macForPulse;
-        
+        std::string checkCmd = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) pactl list short sinks | grep blue";        
         bool alreadyConnected = false;
         FILE* pipe = popen(checkCmd.c_str(), "r");
         if (pipe) {

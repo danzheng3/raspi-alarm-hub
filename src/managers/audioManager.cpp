@@ -180,7 +180,7 @@ void audioManager::setOutput(AudioOutput output) { // NEED TO TEST THIS
         }
     }
 
-    std::string command = "pactl set-default-sink " + sinkToSet;
+    std::string command = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) pactl set-default-sink " + sinkToSet;
     system(command.c_str());
     currentOutput = output;
 }
@@ -189,8 +189,7 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
     if (volume < 0) volume = 0;
     if (volume > 100) volume = 100;
 
-    std::string command = "pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(volume) + "%";
-    system(command.c_str());
+    std::string command = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(volume) + "%";    system(command.c_str());
     currentVolume = volume;
 
     std::cout << "audioManager: volume set to " << volume << std::endl;

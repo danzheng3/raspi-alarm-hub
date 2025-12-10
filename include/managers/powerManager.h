@@ -53,7 +53,7 @@ private:
     std::mutex stateMutex;
     std::chrono::steady_clock::time_point lastActivityTime;
     std::chrono::steady_clock::time_point lastLightCheckTime;
-    const std::chrono::seconds dimTimeout{30};     // Dim after 30s
+    const std::chrono::seconds dimTimeout{60};     // Dim after 60s
     const std::chrono::seconds sleepTimeout{300};  // Sleep after 5min
     
     // Brightness
