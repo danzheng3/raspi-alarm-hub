@@ -1,5 +1,7 @@
 #include <string>
 #include <vector>
+#include <thread>
+#include <algorithm>
 #pragma once
 #include "hardware_layer/BluetoothAdapter.h"
 #include "hardware_layer/WifiAdapter.h"

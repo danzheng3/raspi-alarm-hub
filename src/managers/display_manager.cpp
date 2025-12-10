@@ -43,7 +43,10 @@ DisplayManager::DisplayManager(timeManager* timeMgr, alarmManager* alarmMgr,
         return;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
+    bufferTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, 
+                                      SDL_TEXTUREACCESS_TARGET, 1280, 720);
+
     std::cout << "displaymanager initialized" << std::endl;
 
     if (m_eventBus) {
@@ -81,6 +84,7 @@ DisplayManager::~DisplayManager() {
     if (window) {
         SDL_DestroyWindow(window);
     }
+    if (bufferTexture) SDL_DestroyTexture(bufferTexture);
     IMG_Quit();
     TTF_Quit();
     SDL_Quit();
@@ -130,20 +134,38 @@ void DisplayManager::run(std::atomic<bool>& running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
-            } else if (event.type == SDL_FINGERDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
+            }
+            
+            if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
                 inputDetected = true;
-
-                if (pwrMgr) {
-                    pwrMgr->registerActivity();
-                }
-                std::cout << "Touch detected at (" << event.tfinger.x << ", " << event.tfinger.y << ")" << std::endl;
-            } else if (event.type == SDL_KEYDOWN) {
-            if (event.key.keysym.sym == SDLK_s) {
-                if (alarmMgr) {
+                
+                int screenX = event.button.x;
+                int screenY = event.button.y;
+                
+                // Remap: NewX = OldY, NewY = ScreenWidth - OldX
+                event.button.x = screenY; 
+                event.button.y = 720 - screenX; 
+                
+                // Power Manager wake check
+                if (pwrMgr && event.type == SDL_MOUSEBUTTONDOWN) pwrMgr->registerActivity();
+            } 
+            else if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERUP || event.type == SDL_FINGERMOTION) {
+                inputDetected = true;
+                
+                float screenX = event.tfinger.x; // 0.0 - 1.0
+                float screenY = event.tfinger.y; // 0.0 - 1.0
+                
+                // Remap Normalized Coordinates
+                event.tfinger.x = screenY;
+                event.tfinger.y = 1.0f - screenX;
+                
+                if (pwrMgr && event.type == SDL_FINGERDOWN) pwrMgr->registerActivity();
+            }
+            else if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_s && alarmMgr) {
                     alarmMgr->simulateHardwareReset();
                 }
             }
-    }
             
             if (currentPage) {
                 currentPage->handleEvent(event);
@@ -155,14 +177,29 @@ void DisplayManager::run(std::atomic<bool>& running) {
         }
 
         if (currentPage) {
+            SDL_SetRenderTarget(renderer, bufferTexture);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
+
             currentPage->render(renderer);
 
-            if (inputDetected) {
-                 auto renderDone = std::chrono::high_resolution_clock::now();
-                 auto totalLatency = std::chrono::duration_cast<std::chrono::milliseconds>(renderDone - frameStart).count();
-                 
-            }
+            SDL_SetRenderTarget(renderer, nullptr);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
 
+            SDL_Rect dstRect;
+            // Center the rotated texture on screen
+            // X = (ScreenW - TexW) / 2  --> (720 - 1280) / 2 = -280
+            // Y = (ScreenH - TexH) / 2  --> (1280 - 720) / 2 = 280
+            dstRect.x = -280; 
+            dstRect.y = 280;
+            dstRect.w = 1280;
+            dstRect.h = 720;
+
+
+            SDL_RenderCopyEx(renderer, bufferTexture, nullptr, &dstRect, 90.0, nullptr, SDL_FLIP_NONE);
+            
+            SDL_RenderPresent(renderer);
         }
 
         if (inputDetected) {

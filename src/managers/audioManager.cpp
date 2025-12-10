@@ -62,7 +62,20 @@ void audioManager::playSongAtIndex(size_t index) {
     
     stop();
     monitorActive = false;
-    if (monitorThread.joinable()) monitorThread.join();
+
+    // 2. Handle the thread
+    if (monitorThread.joinable()) {
+        // PREVENT DEADLOCK: Check if we are running INSIDE the monitor thread
+        if (std::this_thread::get_id() == monitorThread.get_id()) {
+            std::cout << "[AudioMgr] Self-call detected, detaching monitor thread instead of joining." << std::endl;
+            monitorThread.detach(); 
+        } else {
+            monitorThread.join();
+        }
+    }
+    std::string stopCommand = "killall -9 mpg123 2>/dev/null";
+    system(stopCommand.c_str());
+    currentState = AudioState::STOPPED;
     currentIndex = index;
     
     const Song& song = songList[index];
@@ -74,9 +87,11 @@ void audioManager::playSongAtIndex(size_t index) {
         escapedPath.replace(pos, 1, "'\\''");
         pos += 4;
     }
+
+    setOutput(AudioOutput::AUTO);
     
     // Play song and automatically continue to next when finished
-    std::string command = "(mpg123 -q '" + escapedPath + "' && echo 'SONG_FINISHED') > /tmp/mpg123.log 2>&1 &";
+    std::string command = "setsid sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) mpg123 -o pulse -q '" + escapedPath + "' < /dev/null && echo 'SONG_FINISHED' > /tmp/mpg123.log 2>&1 &";
     system(command.c_str());
     
     currentState = AudioState::PLAYING;
@@ -114,10 +129,11 @@ void audioManager::playNextSong() {
 
 void audioManager::pause() {
     if (currentState == AudioState::PLAYING) {
-        std::string command = "killall -STOP mpg123 2>/dev/null";
+        std::string command = "pkill -STOP -u daniel -x mpg123";
         system(command.c_str());
+        
         currentState = AudioState::PAUSED;
-        std::cout << "audio paused" << std::endl;
+        std::cout << "Audio paused" << std::endl;
     }
 }
 
@@ -157,6 +173,9 @@ void audioManager::setOutput(AudioOutput output) { // NEED TO TEST THIS
                 std::istringstream iss(result);
                 iss >> btSink;
                 sinkToSet = btSink;
+                std::cout << "[audioMgr] set to bt sink" << btSink << std::endl;
+            } else {
+                std::cout << "[audioMgr] bt sink not found" << std::endl;
             }
         }
     }
@@ -178,6 +197,10 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
 } 
 
 void audioManager::alarmRing(const std::string& customPath) {
+
+    std::cout << "[AudioMgr] Switching output for Alarm..." << std::endl;
+    setOutput(AudioOutput::AUTO);
+
     stop();
     std::string path = (customPath.empty() || customPath == "default") ? std::string(ALARM_RING_PATH) : customPath;
     std::cout << "path debug " << path << std::endl;
@@ -185,7 +208,7 @@ void audioManager::alarmRing(const std::string& customPath) {
         std::cout << "[audioMgr] custom audio path DNE" << std::endl;
         path = std::string(ALARM_RING_PATH);
     }
-    std::string command = "mpg123 -q --loop -1 '" + path + "' > /dev/null 2>&1 &";
+    std::string command = "setsid sudo -u daniel env XDG_RUNTIME_DIR=/run/user/$(id -u daniel) mpg123 -o pulse -q --loop -1 '" + path + "' < /dev/null > /dev/null 2>&1 &";
     setVolume(100); // max volume for alarm
 
     system(command.c_str());

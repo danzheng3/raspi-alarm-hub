@@ -21,11 +21,13 @@ MusicPage::~MusicPage() {
 }
 
 void MusicPage::initEQSliders() {
-    int startX = 50;
-    int startY = 850; // Position below song list
-    int spacing = 95;
-    int width = 60;
-    int height = 200;
+    eqSliders.clear();
+    // Position sliders on the RIGHT side of the screen
+    int startX = 700; 
+    int startY = 150; 
+    int spacing = 75;
+    int width = 50;
+    int height = 300; // Taller sliders
 
     std::array<std::string, 7> labels = {"62", "160", "400", "1k", "2.5k", "6k", "16k"};
 
@@ -39,115 +41,90 @@ void MusicPage::initEQSliders() {
 }
 
 void MusicPage::render(SDL_Renderer* renderer) {
-    // Dark background
     SDL_SetRenderDrawColor(renderer, 25, 25, 35, 255);
     SDL_RenderClear(renderer);
-    
     SDL_Color white = {255, 255, 255, 255};
-    SDL_Color gray = {150, 150, 150, 255};
     SDL_Color accent = {100, 150, 255, 255};
-    
-    // Title
-    renderText(renderer, "Music Player", 250, 20, white, titleFont);
-    
-    // Back button (top left)
-    backButton = {20, 20, 150, 60};
-    renderButton(renderer, backButton, "< Back", accent);
-    
-    // Song list area
+
+    // Header
+    renderText(renderer, "Music Player", 50, 20, white, titleFont);
+    backButton = {1100, 20, 150, 60}; // Back button top right
+    renderButton(renderer, backButton, "Back", accent);
+
+    // --- LEFT SIDE: Song List ---
+    int listX = 50;
     int listY = 100;
-    int listHeight = 900;
-    int itemHeight = 60;
-    int visibleSongs = 8;
-    
-    // Render songs
+    int listW = 600;
+    int itemH = 60;
+    int visibleSongs = 8; // Fits in 720p height comfortably
+
+    renderText(renderer, "Library", listX, listY - 40, white, buttonFont);
+
     for (int i = 0; i < visibleSongs && (i + scrollOffset) < songs.size(); i++) {
-        int songIndex = i + scrollOffset;
-        SDL_Rect songRect = {50, listY + i * itemHeight, 620, itemHeight - 5};
+        int idx = i + scrollOffset;
+        SDL_Rect itemRect = {listX, listY + (i * itemH), listW, itemH - 5};
         
-        // Highlight if playing or selected
-        if (songIndex == selectedSong) {
-            SDL_SetRenderDrawColor(renderer, 60, 90, 150, 255);
-            SDL_RenderFillRect(renderer, &songRect);
-        } else {
-            SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
-            SDL_RenderFillRect(renderer, &songRect);
-        }
+        if (idx == selectedSong) SDL_SetRenderDrawColor(renderer, 60, 90, 150, 255);
+        else SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
         
-        SDL_SetRenderDrawColor(renderer, 80, 80, 90, 255);
-        SDL_RenderDrawRect(renderer, &songRect);
-        
-        renderText(renderer, songs[songIndex].title, 
-                   songRect.x + 15, songRect.y + 18, white, songFont);
+        SDL_RenderFillRect(renderer, &itemRect);
+        renderText(renderer, songs[idx].title, itemRect.x + 10, itemRect.y + 15, white, smallFont);
     }
-    
-    // REMOVED SCROLL BUTTON FEATURE FOR SIMPLICITY
-    
-    // Control buttons at bottom
-    int btnY = 1100;
-    int btnW = 130;
-    int btnH = 80;
-    int btnSpacing = 20;
-    int totalWidth = 4 * btnW + 3 * btnSpacing;
-    int startX = (720 - totalWidth) / 2;
-    
-    prevButton = {startX, btnY, btnW, btnH};
-    playPauseButton = {startX + btnW + btnSpacing, btnY, btnW, btnH};
-    stopButton = {startX + 2 * (btnW + btnSpacing), btnY, btnW, btnH};
-    nextButton = {startX + 3 * (btnW + btnSpacing), btnY, btnW, btnH};
-    
-    SDL_Color btnColor = {70, 100, 180, 255};
-    SDL_Color stopColor = {180, 60, 60, 255};
-    
-    renderButton(renderer, prevButton, "<<", btnColor);
-    
-    if (audioMgr->getState() == audioManager::AudioState::PLAYING) {
-        renderButton(renderer, playPauseButton, "||", btnColor);
-    } else {
-        renderButton(renderer, playPauseButton, ">", btnColor);
-    }
-    
-    renderButton(renderer, stopButton, "STOP", stopColor);
-    renderButton(renderer, nextButton, ">>", btnColor);
 
-    renderText(renderer, "Equalizer", 50, 800, white, buttonFont);
-
+    // --- RIGHT SIDE: Equalizer ---
+    renderText(renderer, "Equalizer", 700, listY - 40, white, buttonFont);
+    
+    // Render sliders (logic remains similar, using new coordinates from initEQSliders)
     for (const auto& slider : eqSliders) {
-        // 1. Draw Track Background
+        // Track
         SDL_SetRenderDrawColor(renderer, 60, 60, 70, 255);
         SDL_RenderFillRect(renderer, &slider.trackRect);
         
-        // 2. Calculate Knob Position based on current Value
-        uint8_t val = eqMgr->getBand(slider.bandIndex); // 0-255
-        // Invert Y because 255 is TOP, 0 is BOTTOM
+        uint8_t val = eqMgr->getBand(slider.bandIndex);
         float percent = (float)val / 255.0f;
-        int knobH = 20;
+        int knobH = 30;
         int knobY = slider.trackRect.y + slider.trackRect.h - (int)(percent * slider.trackRect.h) - (knobH/2);
         
-        // Clamp knobY
+        // Clamp
         if (knobY < slider.trackRect.y) knobY = slider.trackRect.y;
         if (knobY > slider.trackRect.y + slider.trackRect.h - knobH) knobY = slider.trackRect.y + slider.trackRect.h - knobH;
 
-        // 3. Draw Filled Bar (Green spotify style)
-        SDL_Rect fillRect = {
-            slider.trackRect.x, 
-            knobY + (knobH/2), 
-            slider.trackRect.w, 
-            (slider.trackRect.y + slider.trackRect.h) - (knobY + (knobH/2))
-        };
-        SDL_SetRenderDrawColor(renderer, 30, 215, 96, 255); // Spotify Green
+        // Fill
+        SDL_Rect fillRect = {slider.trackRect.x, knobY + (knobH/2), slider.trackRect.w, (slider.trackRect.y + slider.trackRect.h) - (knobY + (knobH/2))};
+        SDL_SetRenderDrawColor(renderer, 30, 215, 96, 255);
         SDL_RenderFillRect(renderer, &fillRect);
 
-        // 4. Draw Knob
+        // Knob
         SDL_Rect knob = {slider.trackRect.x - 5, knobY, slider.trackRect.w + 10, knobH};
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &knob);
-
-        // 5. Label
-        renderText(renderer, slider.label, slider.trackRect.x + 10, slider.trackRect.y + slider.trackRect.h + 5, white, smallFont);
+        
+        // Label
+        renderText(renderer, slider.label, slider.trackRect.x + 10, slider.trackRect.y + slider.trackRect.h + 10, white, smallFont);
     }
+
+    // --- BOTTOM: Controls ---
+    int btnY = 620; // Near bottom
+    int btnW = 100;
+    int btnH = 60;
+    int btnSpacing = 20;
     
-    SDL_RenderPresent(renderer);
+    // Center the controls relative to the Song List (0-650 area)
+    int ctrlCenterX = listX + listW/2;
+    int startBtnX = ctrlCenterX - ( (4*btnW + 3*btnSpacing) / 2 );
+
+    prevButton = {startBtnX, btnY, btnW, btnH};
+    playPauseButton = {startBtnX + btnW + btnSpacing, btnY, btnW, btnH};
+    stopButton = {startBtnX + 2*(btnW + btnSpacing), btnY, btnW, btnH};
+    nextButton = {startBtnX + 3*(btnW + btnSpacing), btnY, btnW, btnH};
+    
+    SDL_Color btnColor = {70, 100, 180, 255};
+    renderButton(renderer, prevButton, "<<", btnColor);
+    renderButton(renderer, playPauseButton, (audioMgr->getState() == audioManager::AudioState::PLAYING ? "||" : ">"), btnColor);
+    renderButton(renderer, stopButton, "[]", {180, 60, 60, 255});
+    renderButton(renderer, nextButton, ">>", btnColor);
+
+    // SDL_RenderPresent(renderer);
 }
 
 void MusicPage::handleEvent(const SDL_Event& e) {

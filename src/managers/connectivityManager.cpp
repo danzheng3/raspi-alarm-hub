@@ -15,7 +15,9 @@ void connectivityManager::loadCredentials() {
     currentSSID = storage.getWifiSSID();
     wifiPassword = storage.getWifiPassword();
     std::cout << "loaded wifi ssid, pswd" << std::endl;
-    //currentSpeakerID = storage.get("bluetooth_speaker_id");
+    currentSpeakerID = storage.get("bluetooth_id");
+    std::cout << "  BT Speaker: " << (currentSpeakerID.empty() ? "None" : currentSpeakerID) << std::endl;
+
 }
 
 void connectivityManager::saveWifiCredentials(const std::string& ssid, const std::string& password) {
@@ -24,12 +26,14 @@ void connectivityManager::saveWifiCredentials(const std::string& ssid, const std
 }
 
 void connectivityManager::saveBluetoothSpeakerID(const std::string& speakerID) {
-    //storage.set("bluetooth_speaker_id", speakerID);
-    //storage.save();
+    storage.set("bluetooth_id", speakerID);
+    storage.save();
 }
 
 void connectivityManager::init() {
     loadCredentials();
+
+    btAdapter.initialize();
 
     if (wifiAdapter.isConnected()) {
         std::cout << "WiFi is already connected. Skipping configuration." << std::endl;
@@ -39,10 +43,8 @@ void connectivityManager::init() {
             event.isConnected = true;
             m_eventBus->publish(event);
         }
-        return; // EXIT EARLY
-    }
 
-    if (!currentSSID.empty() && !wifiPassword.empty()) {
+    } else if (!currentSSID.empty() && !wifiPassword.empty()) {
         if (wifiAdapter.connect(currentSSID, wifiPassword)) {
             std::cout << "Connected to WiFi: " << currentSSID << std::endl;
 
@@ -63,6 +65,50 @@ void connectivityManager::init() {
     }
 
     // add bluetooth fx here
+
+    if (!currentSpeakerID.empty()) {
+        
+        // --- NEW LOGIC START ---
+        // Check if the sink already exists in PulseAudio
+        std::string macForPulse = currentSpeakerID;
+        std::replace(macForPulse.begin(), macForPulse.end(), ':', '_'); // Convert XX:XX to XX_XX
+        
+        std::string checkCmd = "pactl list short sinks | grep " + macForPulse;
+        
+        bool alreadyConnected = false;
+        FILE* pipe = popen(checkCmd.c_str(), "r");
+        if (pipe) {
+            char buffer[128];
+            if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                alreadyConnected = true;
+            }
+            pclose(pipe);
+        }
+
+        if (alreadyConnected) {
+            std::cout << "[ConnMgr] Bluetooth Speaker already connected (PulseAudio sink found)." << std::endl;
+            // Optionally publish the event so the UI knows
+            if (m_eventBus) {
+                BluetoothSpeakerConnectedEvent event;
+                event.deviceName = currentSpeakerID; // or the Pulse name
+                m_eventBus->publish(event);
+            }
+        } 
+        else {
+            // Not found, proceed with connection attempt
+            std::cout << "[ConnMgr] Found saved Speaker ID. Connecting..." << std::endl;
+            
+            std::thread([this]() {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                if (connectBluetooth(currentSpeakerID)) {
+                    std::cout << "[ConnMgr] Auto-connected to Bluetooth Speaker." << std::endl;
+                } else {
+                    std::cerr << "[ConnMgr] Failed to auto-connect to Bluetooth Speaker." << std::endl;
+                }
+            }).detach();
+        }
+        // --- NEW LOGIC END ---
+    }
 
 }
 

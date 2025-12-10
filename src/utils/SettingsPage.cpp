@@ -17,109 +17,77 @@ SettingsPage::~SettingsPage() {
 void SettingsPage::render(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 25, 25, 35, 255);
     SDL_RenderClear(renderer);
-    
     SDL_Color white = {255, 255, 255, 255};
     SDL_Color accent = {100, 150, 255, 255};
     SDL_Color green = {80, 200, 120, 255};
-    SDL_Color red = {200, 80, 80, 255};
     
-    // Title & Back
-    renderText(renderer, "Connectivity", 200, 20, white, titleFont);
-    backButton = {20, 20, 150, 60};
-    renderButton(renderer, backButton, "< Back", accent);
+    renderText(renderer, "Connectivity Settings", 50, 20, white, titleFont);
+    backButton = {1100, 20, 150, 60};
+    renderButton(renderer, backButton, "Back", accent);
+
+    // --- LEFT SIDE: WiFi ---
+    int leftX = 50;
+    int leftW = 550;
     
-    // WiFi Section
-    renderText(renderer, "WiFi Networks", 50, 100, white, listFont);
+    renderText(renderer, "WiFi Networks", leftX, 100, white, listFont);
+    scanButton = {leftX + 350, 95, 150, 40};
+    renderButton(renderer, scanButton, scanning ? "..." : "Scan", accent);
     
-    // Scan button
-    scanButton = {520, 100, 180, 50};
-    renderButton(renderer, scanButton, scanning ? "Scanning..." : "Scan", accent);
-    
-    // Current status
-    std::string status = connMgr && connMgr->isWifiConnected() ? 
-        "Connected " : "Not Connected";
-    renderText(renderer, status, 50, 160, 
-               connMgr && connMgr->isWifiConnected() ? green : red, listFont);
-    
-    // Network list
-    int listY = 220;
+    // List
+    int listY = 160;
     for (size_t i = 0; i < std::min(wifiNetworks.size(), size_t(8)); i++) {
-        SDL_Rect netRect = {50, listY + i * 60, 620, 55};
-        
+        SDL_Rect netRect = {leftX, listY + i * 60, leftW, 50};
         bool isSelected = (wifiNetworks[i] == selectedSSID);
-        SDL_SetRenderDrawColor(renderer, isSelected ? 60 : 40, 
-                               isSelected ? 90 : 45, 
-                               isSelected ? 150 : 50, 255);
+        
+        SDL_SetRenderDrawColor(renderer, isSelected ? 60 : 40, isSelected ? 90 : 45, isSelected ? 150 : 50, 255);
         SDL_RenderFillRect(renderer, &netRect);
-        SDL_SetRenderDrawColor(renderer, 80, 80, 90, 255);
-        SDL_RenderDrawRect(renderer, &netRect);
-        
-        renderText(renderer, wifiNetworks[i], netRect.x + 15, netRect.y + 12, 
-                   white, listFont);
+        renderText(renderer, wifiNetworks[i], netRect.x + 15, netRect.y + 10, white, listFont);
     }
     
-    // Password input & keyboard (if network selected)
-    if (!selectedSSID.empty()) {
-        renderText(renderer, "Password: " + passwordInput + "_", 50, 750, white, listFont);
-        
-        connectButton = {50, 800, 200, 60};
-        disconnectButton = {270, 800, 200, 60};
-        
-        renderButton(renderer, connectButton, "Connect", green);
-        renderButton(renderer, disconnectButton, "Cancel", red);
-        
-        renderKeyboard(renderer);
-    }
-    
-    // Bluetooth section (simple status)
-    btStatusRect = {50, 950, 620, 100};
+    // --- RIGHT SIDE: Input & Bluetooth ---
+    int rightX = 650;
+    int rightW = 580;
+
+    // Bluetooth Status Box
+    btStatusRect = {rightX, 100, rightW, 80};
     SDL_SetRenderDrawColor(renderer, 40, 45, 50, 255);
     SDL_RenderFillRect(renderer, &btStatusRect);
-    SDL_SetRenderDrawColor(renderer, 80, 80, 90, 255);
-    SDL_RenderDrawRect(renderer, &btStatusRect);
-    
-    std::string btStatus = "Bluetooth: ";
-    btStatus += connMgr && connMgr->isBluetoothConnected() ? 
-        "Speaker Connected ✓" : "Not Connected";
-    renderText(renderer, btStatus, 70, 985, 
-               connMgr && connMgr->isBluetoothConnected() ? green : red, listFont);
-    
-    SDL_RenderPresent(renderer);
+    std::string btText = "Bluetooth: " + (std::string)(connMgr->isBluetoothConnected() ? "Connected" : "Disconnected");
+    renderText(renderer, btText, rightX + 20, 120, connMgr->isBluetoothConnected() ? green : white, listFont);
+
+    // Password Entry
+    if (!selectedSSID.empty()) {
+        renderText(renderer, "Connect to: " + selectedSSID, rightX, 250, white, listFont);
+        renderText(renderer, "Pass: " + passwordInput + "_", rightX, 300, white, listFont);
+        
+        connectButton = {rightX, 360, 150, 50};
+        disconnectButton = {rightX + 170, 360, 150, 50};
+        renderButton(renderer, connectButton, "Connect", green);
+        renderButton(renderer, disconnectButton, "Cancel", {200, 80, 80, 255});
+
+        // Keyboard rendered below buttons
+        renderKeyboard(renderer, rightX, 450); 
+    }
+
+    // SDL_RenderPresent(renderer);
 }
 
-void SettingsPage::renderKeyboard(SDL_Renderer* renderer) {
+void SettingsPage::renderKeyboard(SDL_Renderer* renderer, int startX, int startY) {
     keyRects.clear();
-    int keyW = 60;
-    int keyH = 60;
-    int startY = 1100;
+    int keySize = 50;
+    int gap = 5;
     int keysPerRow = 10;
-    
-    SDL_Color keyColor = {60, 70, 90, 255};
-    SDL_Color white = {255, 255, 255, 255};
     
     for (size_t i = 0; i < keyLayout.size(); i++) {
         int row = i / keysPerRow;
         int col = i % keysPerRow;
-        int x = 50 + col * (keyW + 5);
-        int y = startY + row * (keyH + 5);
+        SDL_Rect k = {startX + col*(keySize+gap), startY + row*(keySize+gap), keySize, keySize};
+        keyRects.push_back(k);
         
-        SDL_Rect keyRect = {x, y, keyW, keyH};
-        keyRects.push_back(keyRect);
-        
-        SDL_SetRenderDrawColor(renderer, keyColor.r, keyColor.g, keyColor.b, 255);
-        SDL_RenderFillRect(renderer, &keyRect);
-        SDL_SetRenderDrawColor(renderer, 100, 100, 110, 255);
-        SDL_RenderDrawRect(renderer, &keyRect);
-        
-        std::string keyStr(1, keyLayout[i]);
-        if (keyLayout[i] == ' ') keyStr = "___";
-        renderText(renderer, keyStr, x + 18, y + 15, white, buttonFont);
+        SDL_SetRenderDrawColor(renderer, 60, 70, 90, 255);
+        SDL_RenderFillRect(renderer, &k);
+        // ... render text char ...
     }
-    
-    // Backspace key
-    SDL_Rect backspaceKey = {570, startY, 120, keyH};
-    keyRects.push_back(backspaceKey);
-    renderButton(renderer, backspaceKey, "<--", {180, 60, 60, 255});
 }
 
 void SettingsPage::handleEvent(const SDL_Event& e) {

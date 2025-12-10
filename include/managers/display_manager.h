@@ -45,6 +45,7 @@ class DisplayManager {
 
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
+        SDL_Texture* bufferTexture = nullptr;
 
         TTF_Font* font;
         SDL_Texture* weatherIcon;

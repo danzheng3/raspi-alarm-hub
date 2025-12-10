@@ -34,129 +34,132 @@ std::string MainPage::getWeatherIconPath(int weatherCode) {
     if (weatherCode == 0 || weatherCode == 1) return "/home/daniel/Downloads/raspi-alarm-hub/images/sunny-weather.png";
     if (weatherCode == 2 || weatherCode == 3) return "/home/daniel/Downloads/raspi-alarm-hub/images/cloudy.png";
     //if (weatherCode >= 45 && weatherCode <= 48) return "../../images/fog.png"; // add if this becomes an issue
-    if (weatherCode >= 51 && weatherCode <= 67) return "/home/daniel/raspi-alarm-hub/images/rainy.png";
-    if (weatherCode >= 71 && weatherCode <= 77) return "/home/daniel/raspi-alarm-hub/images/snow_icon.png";
-    if (weatherCode >= 80 && weatherCode <= 82) return "/home/daniel/raspi-alarm-hub/images/rainy.png";
-    if (weatherCode >= 85 && weatherCode <= 86) return "/home/daniel/raspi-alarm-hub/images/snow_icon.png";
+    if (weatherCode >= 51 && weatherCode <= 67) return "/home/daniel/Downloads/raspi-alarm-hub/images/rainy.png";
+    if (weatherCode >= 71 && weatherCode <= 77) return "/home/daniel/Downloads/raspi-alarm-hub/images/snow_icon.png";
+    if (weatherCode >= 80 && weatherCode <= 82) return "/home/daniel/Downloads/raspi-alarm-hub/images/rainy.png";
+    if (weatherCode >= 85 && weatherCode <= 86) return "/home/daniel/Downloads/raspi-alarm-hub/images/snow_icon.png";
     //if (weatherCode >= 95) return "../../images/thunder.png"; // add if needed
     return "~/Downloads/raspi-alarm-hub/images/cloudy.png"; // default
 }
 
 void MainPage::render(SDL_Renderer* renderer) {
-    // Gradient background (dark blue to darker blue)
-    for (int y = 0; y < 1280; y++) {
-        int blue = 35 + (y * 15) / 1280;
+    // Gradient background (horizontal stretch)
+    for (int y = 0; y < 720; y++) {
+        int blue = 35 + (y * 15) / 720;
         SDL_SetRenderDrawColor(renderer, 15, 20, blue, 255);
-        SDL_RenderDrawLine(renderer, 0, y, 720, y);
+        SDL_RenderDrawLine(renderer, 0, y, 1280, y);
     }
     
     SDL_Color white = {255, 255, 255, 255};
     SDL_Color lightGray = {200, 200, 200, 255};
-    SDL_Color dimGray = {150, 150, 150, 255};
     SDL_Color accent = {100, 150, 255, 255};
     
-    // Status bar (top)
+    // --- TOP STATUS BAR (Full Width) ---
     SDL_SetRenderDrawColor(renderer, 25, 30, 45, 200);
-    SDL_Rect statusBar = {0, 0, 720, 60};
+    SDL_Rect statusBar = {0, 0, 1280, 50};
     SDL_RenderFillRect(renderer, &statusBar);
     
-    // WiFi status (left side of status bar)
-    std::string wifiStatus = connMgr ? 
-        (connMgr->isWifiConnected() ? "WiFi Connected" : "WiFi Disconnected") : "WiFi ?";
-    renderText(renderer, wifiStatus, 20, 15, 
-               connMgr && connMgr->isWifiConnected() ? accent : dimGray, tinyFont);
+    // WiFi status (Top Left)
+    std::string wifiStatus = connMgr ? (connMgr->isWifiConnected() ? "WiFi Connected" : "WiFi Disconnected") : "WiFi ?";
+    renderText(renderer, wifiStatus, 20, 10, connMgr && connMgr->isWifiConnected() ? accent : lightGray, tinyFont);
     
-    // Date (right side of status bar)
+    // Date (Top Right of the main area, not the sidebar)
     if (timeMgr) {
         std::string dateStr = timeMgr->getFormattedDate("%b %d, %Y");
-        renderText(renderer, dateStr, 520, 15, lightGray, tinyFont);
+        renderText(renderer, dateStr, 750, 10, lightGray, tinyFont);
     }
+
+    // --- LEFT CONTENT AREA (0 to 980) ---
     
-    // Large time display (center-top)
+    // 1. Large Time Display
     if (timeMgr) {
         std::string timeStr = timeMgr->getFormattedTime();
-        int boxWidth = 520;
-        int boxX = (720 - boxWidth) / 2;
-        timeDisplayRect = {boxX, 100, boxWidth, 150};
+        // Centered in the left zone (0-980)
+        int boxWidth = 500;
+        int boxX = (980 - boxWidth) / 2; 
+        timeDisplayRect = {boxX, 100, boxWidth, 160};
         
-        // Semi-transparent background
         SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
         SDL_RenderFillRect(renderer, &timeDisplayRect);
+        
+        // Draw Border
         SDL_SetRenderDrawColor(renderer, accent.r, accent.g, accent.b, 255);
-        for (int i = 0; i < 3; i++) {
-            SDL_Rect outline = {timeDisplayRect.x - i, timeDisplayRect.y - i, 
-                                timeDisplayRect.w + 2*i, timeDisplayRect.h + 2*i};
-            SDL_RenderDrawRect(renderer, &outline);
-        }
+        SDL_RenderDrawRect(renderer, &timeDisplayRect);
         
-        
-        renderCenteredText(renderer, timeStr, 130, white, font);    
+        // Center text in box
+        int w, h;
+        TTF_SizeText(font, timeStr.c_str(), &w, &h);
+        renderText(renderer, timeStr, boxX + (boxWidth - w)/2, timeDisplayRect.y + 30, white, font);
     }
     
-    // Weather display (center)
+    // 2. Weather Display (Below Time)
     if (weatherMgr) {
         WeatherData weather = weatherMgr->getWeatherData();
         if (weather.valid) {
-            int weatherBoxWidth = 320;
-            int weatherBoxX = (720 - weatherBoxWidth) / 2;
-            weatherRect = {weatherBoxX, 300, weatherBoxWidth, 200};
+            int weatherBoxWidth = 400;
+            int weatherBoxX = (980 - weatherBoxWidth) / 2;
+            weatherRect = {weatherBoxX, 300, weatherBoxWidth, 180};
             
             SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
             SDL_RenderFillRect(renderer, &weatherRect);
-            SDL_SetRenderDrawColor(renderer, 80, 85, 100, 255);
-            SDL_RenderDrawRect(renderer, &weatherRect);
             
-            // Weather icon
-            int iconSize = 80;
-            int iconX = weatherRect.x + (weatherRect.w - iconSize) / 2;
-            int iconY = weatherRect.y + 15; // 15px padding from top
-
+            // Icon
+            int iconSize = 70;
             std::string iconPath = getWeatherIconPath(weather.weatherCode);
             SDL_Surface* iconSurface = IMG_Load(iconPath.c_str());
             if (iconSurface) {
                 SDL_Texture* iconTexture = SDL_CreateTextureFromSurface(renderer, iconSurface);
-                SDL_Rect iconRect = {iconX, iconY, iconSize, iconSize};
+                SDL_Rect iconRect = {weatherRect.x + 30, weatherRect.y + 55, iconSize, iconSize};
                 SDL_RenderCopy(renderer, iconTexture, nullptr, &iconRect);
                 SDL_DestroyTexture(iconTexture);
                 SDL_FreeSurface(iconSurface);
-            } else {
-                std::cerr << "[DisplayMgr] weather icon surface fail: " << IMG_GetError()  << std::endl;
             }
-            
-            // Temperature
+
+            // Temp & Condition text next to icon
             std::ostringstream tempStr;
             tempStr << (int)weather.temperature << " F";
-            renderCenteredText(renderer, tempStr.str(), weatherRect.y + 110, white, smallFont);
-            
-            // Condition
-            renderCenteredText(renderer, weather.condition, weatherRect.y + 160, lightGray, tinyFont);
+            renderText(renderer, tempStr.str(), weatherRect.x + 130, weatherRect.y + 50, white, smallFont);
+            renderText(renderer, weather.condition, weatherRect.x + 130, weatherRect.y + 100, lightGray, tinyFont);
         }
     }
     
-    // Alarm display (below weather)
-    alarmDisplayRect = {150, 550, 420, 100};
+    // 3. Alarm Status (Bottom Left)
+    alarmDisplayRect = {240, 520, 500, 100};
     SDL_SetRenderDrawColor(renderer, 40, 45, 65, 180);
     SDL_RenderFillRect(renderer, &alarmDisplayRect);
-    SDL_SetRenderDrawColor(renderer, 80, 85, 100, 255);
-    SDL_RenderDrawRect(renderer, &alarmDisplayRect);
     
-    std::string alarmLabel = "Alarm: ";
-    std::string alarmTime = alarmMgr ? 
-        (alarmMgr->isAlarmEnabled() ? alarmMgr->getAlarmTime() : "Not Set") : "?";
-    renderText(renderer, alarmLabel + alarmTime, alarmDisplayRect.x + 50, 
-               alarmDisplayRect.y + 30, white, smallFont);
+    std::string alarmLabel = "Next Alarm: ";
+    std::string alarmTime = alarmMgr ? (alarmMgr->isAlarmEnabled() ? alarmMgr->getAlarmTime() : "OFF") : "?";
     
-    // Navigation buttons (bottom)
-    int btnY = 1050;
-    int btnW = 150;
-    int btnH = 150;
-    int spacing = (720 - 4 * btnW) / 5;
+    int aw, ah;
+    std::string fullAlarmStr = alarmLabel + alarmTime;
+    TTF_SizeText(smallFont, fullAlarmStr.c_str(), &aw, &ah);
+    renderText(renderer, fullAlarmStr, alarmDisplayRect.x + (500-aw)/2, alarmDisplayRect.y + 30, white, smallFont);
+
+
+    // --- RIGHT SIDEBAR (Navigation) ---
+    int sidebarX = 980;
+    int sidebarW = 300;
     
-    musicButton = {spacing, btnY, btnW, btnH};
-    settingsButton = {spacing * 2 + btnW, btnY, btnW, btnH};
-    alarmButton = {spacing * 3 + btnW * 2, btnY, btnW, btnH};
-    wifiButton = {spacing * 4 + btnW * 3, btnY, btnW, btnH};
-    
+    // Background for sidebar
+    SDL_SetRenderDrawColor(renderer, 30, 35, 50, 255);
+    SDL_Rect sidebarBg = {sidebarX, 0, sidebarW, 720};
+    SDL_RenderFillRect(renderer, &sidebarBg);
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    SDL_RenderDrawLine(renderer, sidebarX, 0, sidebarX, 720);
+
+    // Buttons stacked vertically
+    int btnH = 120;
+    int btnW = 240;
+    int btnX = sidebarX + (sidebarW - btnW) / 2;
+    int startY = 80;
+    int gap = 30;
+
+    musicButton = {btnX, startY, btnW, btnH};
+    settingsButton = {btnX, startY + btnH + gap, btnW, btnH};
+    alarmButton = {btnX, startY + (btnH + gap) * 2, btnW, btnH};
+    wifiButton = {btnX, startY + (btnH + gap) * 3, btnW, btnH};
+
     renderIconButton(renderer, musicButton, "", "Music", accent);
     renderIconButton(renderer, settingsButton, "", "Settings", accent);
     renderIconButton(renderer, alarmButton, "", "Alarm", accent);
@@ -177,7 +180,6 @@ void MainPage::render(SDL_Renderer* renderer) {
         renderAdjustPopup(renderer, "Set Alarm");
     }
     
-    SDL_RenderPresent(renderer);
 }
 
 void MainPage::renderCenteredText(SDL_Renderer* renderer, const std::string& text, int y, SDL_Color color, TTF_Font* font) {
@@ -186,7 +188,8 @@ void MainPage::renderCenteredText(SDL_Renderer* renderer, const std::string& tex
     int w, h;
     TTF_SizeText(font, text.c_str(), &w, &h);
     
-    int x = (720 - w) / 2; // Center based on screen width of 720
+    // CHANGED: Use 1280 (Logical Landscape Width) instead of 720
+    int x = (1280 - w) / 2; 
     
     SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
     if (surface) {
@@ -201,14 +204,33 @@ void MainPage::renderCenteredText(SDL_Renderer* renderer, const std::string& tex
 void MainPage::renderIconButton(SDL_Renderer* renderer, const SDL_Rect& rect, 
                                 const std::string& icon, const std::string& label, 
                                 SDL_Color color) {
+    // Draw Button Background
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 200);
     SDL_RenderFillRect(renderer, &rect);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderDrawRect(renderer, &rect);
     
     SDL_Color white = {255, 255, 255, 255};
-    renderText(renderer, icon, rect.x + rect.w/2 - 20, rect.y + 30, white, font);
-    renderText(renderer, label, rect.x + rect.w/2 - 40, rect.y + 100, white, tinyFont);
+    int w, h;
+
+    // Center the Icon (if you add icons later)
+    if (!icon.empty()) {
+        TTF_SizeText(font, icon.c_str(), &w, &h);
+        renderText(renderer, icon, rect.x + (rect.w - w)/2, rect.y + 20, white, font);
+    }
+
+    // Center the Label
+    // We calculate the width of the text, then subtract half of that from the center of the button
+    if (tinyFont && !label.empty()) {
+        TTF_SizeText(tinyFont, label.c_str(), &w, &h);
+        int labelX = rect.x + (rect.w - w) / 2;
+        int labelY = rect.y + (rect.h - h) / 2; // Perfectly vertically centered
+        
+        // If you have an icon, push the label down slightly
+        if (!icon.empty()) labelY = rect.y + 80;
+
+        renderText(renderer, label, labelX, labelY, white, tinyFont);
+    }
 }
 
 void MainPage::handleEvent(const SDL_Event& e) {
@@ -287,14 +309,20 @@ void MainPage::renderText(SDL_Renderer* renderer, const std::string& text, int x
 }
 
 void MainPage::renderAdjustPopup(SDL_Renderer* renderer, const std::string& title) {
+    // 1. DIMENSIONS FOR 720p HEIGHT
+    int popupW = 500;
+    int popupH = 400; // Much shorter to fit in 720px
+    int popupX = (1280 - popupW) / 2; // Center horizontally (Logical width is 1280)
+    int popupY = (720 - popupH) / 2;  // Center vertically (Logical height is 720)
+
     // Semi-transparent overlay
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
-    SDL_Rect overlay = {0, 0, 720, 1280};
+    SDL_Rect overlay = {0, 0, 1280, 720};
     SDL_RenderFillRect(renderer, &overlay);
     
     // Popup background
-    SDL_Rect popup = { 60, 350, 600, 580 };
+    SDL_Rect popup = { popupX, popupY, popupW, popupH };
     SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
     SDL_RenderFillRect(renderer, &popup);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -303,78 +331,68 @@ void MainPage::renderAdjustPopup(SDL_Renderer* renderer, const std::string& titl
     SDL_Color black = {0, 0, 0, 255};
     SDL_Color white = {255, 255, 255, 255};
     
-    renderCenteredText(renderer, title, 380, black, font);
+    // Title
+    auto drawCenteredInPopup = [&](const std::string& str, int yOffset, TTF_Font* f) {
+    int w, h;
+    TTF_SizeText(f, str.c_str(), &w, &h);
+    // Center X = PopupX + (PopupWidth - TextWidth) / 2
+    int textX = popupX + (popupW - w) / 2; 
+    int textY = popupY + yOffset;
+    renderText(renderer, str, textX, textY, black, f);
+    };
 
-    // Display current adjusted time in large format
+    // Draw Title
+    drawCenteredInPopup(title, 20, font);
+
+    // Draw Time
     std::ostringstream timeDisplay;
     timeDisplay << std::setfill('0') << std::setw(2) << adjustedHour << ":"
                 << std::setfill('0') << std::setw(2) << adjustedMinute;
-    renderCenteredText(renderer, timeDisplay.str(), 470, black, font);
+    drawCenteredInPopup(timeDisplay.str(), 80, font);
 
-    // Define button positions - larger and better spaced
-    int btnWidth = 120;
-    int btnHeight = 80;
-    int btnY1 = 580;
-    int centerX = 360;
-    int spacing = 140;
+    // Buttons
+    int btnSize = 60;
+    int spacing = 30;
+    int yButtons = popupY + 160;
     
-    HPlusRect = { centerX - spacing - btnWidth/2, btnY1, btnWidth, btnHeight };
-    HMinusRect = { centerX - spacing - btnWidth/2, btnY1 + 100, btnWidth, btnHeight };
-    MPlusRect = { centerX + spacing - btnWidth/2, btnY1, btnWidth, btnHeight };
-    MMinusRect = { centerX + spacing - btnWidth/2, btnY1 + 100, btnWidth, btnHeight };
+    // Centered group of buttons
+    int groupWidth = (btnSize * 4) + (spacing * 3); // Total width of 4 buttons
+    int startX = popupX + (popupW - groupWidth) / 2;
 
-    // Draw hour buttons
-    SDL_SetRenderDrawColor(renderer, 100, 150, 255, 255);
-    SDL_RenderFillRect(renderer, &HPlusRect);
-    SDL_RenderFillRect(renderer, &HMinusRect);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer, &HPlusRect);
-    SDL_RenderDrawRect(renderer, &HMinusRect);
+    // H+, H-, M+, M-
+    HPlusRect  = { startX, yButtons, btnSize, btnSize };
+    HMinusRect = { startX + btnSize + spacing, yButtons, btnSize, btnSize };
+    MPlusRect  = { startX + 2*(btnSize + spacing), yButtons, btnSize, btnSize };
+    MMinusRect = { startX + 3*(btnSize + spacing), yButtons, btnSize, btnSize };
 
-    // Draw minute buttons
-    SDL_SetRenderDrawColor(renderer, 100, 255, 150, 255);
-    SDL_RenderFillRect(renderer, &MPlusRect);
-    SDL_RenderFillRect(renderer, &MMinusRect);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer, &MPlusRect);
-    SDL_RenderDrawRect(renderer, &MMinusRect);
-
-    // Button internal labels (H+, M+, etc) - Centering these too
-    int w, h;
-    
-    // Helper to center text inside a rect
-    auto renderTextInRect = [&](const std::string& txt, const SDL_Rect& r, SDL_Color c, TTF_Font* f) {
-        TTF_SizeText(f, txt.c_str(), &w, &h);
-        renderText(renderer, txt, r.x + (r.w - w)/2, r.y + (r.h - h)/2, c, f);
+    // Draw adjustment buttons
+    auto drawBtn = [&](SDL_Rect r, const char* lbl, SDL_Color c) {
+        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
+        SDL_RenderFillRect(renderer, &r);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(renderer, &r);
+        int w,h; TTF_SizeText(smallFont, lbl, &w, &h);
+        renderText(renderer, lbl, r.x + (r.w-w)/2, r.y + (r.h-h)/2, white, smallFont);
     };
 
-    // Button labels
-    renderText(renderer, "H+", HPlusRect.x + 35, HPlusRect.y + 20, white, smallFont);
-    renderText(renderer, "H-", HMinusRect.x + 35, HMinusRect.y + 20, white, smallFont);
-    renderText(renderer, "M+", MPlusRect.x + 35, MPlusRect.y + 20, white, smallFont);
-    renderText(renderer, "M-", MMinusRect.x + 35, MMinusRect.y + 20, white, smallFont);
-    
-    TTF_SizeText(smallFont, "Hour", &w, &h);
-    renderText(renderer, "Hour", HPlusRect.x + (HPlusRect.w - w)/2, HPlusRect.y - 35, black, smallFont);
+    SDL_Color blue = {100, 150, 255, 255};
+    SDL_Color green = {100, 200, 150, 255};
 
-    TTF_SizeText(smallFont, "Minute", &w, &h);
-    renderText(renderer, "Minute", MPlusRect.x + (MPlusRect.w - w)/2, MPlusRect.y - 35, black, smallFont);
+    drawBtn(HPlusRect, "H+", blue);
+    drawBtn(HMinusRect, "H-", blue);
+    drawBtn(MPlusRect, "M+", green);
+    drawBtn(MMinusRect, "M-", green);
 
-    // Save and Cancel buttons
-    SaveRect = { 120, 820, 200, 70 };
-    CancelRect = { 400, 820, 200, 70 };
-    
-    SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
-    SDL_RenderFillRect(renderer, &SaveRect);
-    SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
-    SDL_RenderFillRect(renderer, &CancelRect);
-    
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer, &SaveRect);
-    SDL_RenderDrawRect(renderer, &CancelRect);
-    
-    renderText(renderer, "Save", SaveRect.x + 50, SaveRect.y + 15, white, smallFont);
-    renderText(renderer, "Cancel", CancelRect.x + 35, CancelRect.y + 15, white, smallFont);
+    // Save / Cancel Buttons at bottom
+    int actionBtnW = 150;
+    int actionBtnH = 50;
+    int actionY = popupY + popupH - 70;
+
+    SaveRect = { popupX + 50, actionY, actionBtnW, actionBtnH };
+    CancelRect = { popupX + popupW - 50 - actionBtnW, actionY, actionBtnW, actionBtnH };
+
+    drawBtn(SaveRect, "Save", {50, 200, 50, 255});
+    drawBtn(CancelRect, "Cancel", {200, 50, 50, 255});
 }
 
 bool MainPage::isPointInRect(int x, int y, const SDL_Rect& rect) {

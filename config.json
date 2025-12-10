@@ -1,11 +1,12 @@
 {
     "alarm_actions": "{\"alarm_audio_path\":\"default\",\"led\":false,\"led_day\":1,\"pillbox\":true,\"sound\":true,\"strobe\":true}",
-    "alarm_time": "23:33",
+    "alarm_time": "15:00",
     "audio_settings": {
         "alarm_volume": 100,
         "default_volume": 50,
         "play_mode": "normal"
     },
+    "bluetooth_id": "44:1D:64:AE:53:4E",
     "rtc_time": "12:00",
     "weather_latitude": "40.4167",
     "weather_longitude": "-86.8753",

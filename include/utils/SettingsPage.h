@@ -47,7 +47,7 @@ private:
                     int x, int y, SDL_Color color, TTF_Font* font);
     void renderButton(SDL_Renderer* renderer, const SDL_Rect& rect, 
                       const std::string& text, SDL_Color bgColor);
-    void renderKeyboard(SDL_Renderer* renderer);
+    void renderKeyboard(SDL_Renderer* renderer, int startX, int startY);
     void scanWifi();
     bool isPointInRect(int x, int y, const SDL_Rect& rect);
 };

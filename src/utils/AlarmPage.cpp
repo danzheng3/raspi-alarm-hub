@@ -29,66 +29,81 @@ AlarmsPage::~AlarmsPage() {
 }
 
 void AlarmsPage::render(SDL_Renderer* renderer) {
-    // Dark Background
+    // 1. Dark Background
     SDL_SetRenderDrawColor(renderer, 25, 25, 35, 255);
     SDL_RenderClear(renderer);
     
     SDL_Color white = {255, 255, 255, 255};
     SDL_Color accent = {100, 150, 255, 255};
     
-    // Header
-    renderText(renderer, "Alarm Settings", 200, 20, white, titleFont);
-    backButton = {20, 20, 150, 60};
-    renderButton(renderer, backButton, "< Back", accent);
+    // 2. Header
+    renderText(renderer, "Alarm Settings", 50, 20, white, titleFont);
+    backButton = {1100, 20, 150, 60};
+    renderButton(renderer, backButton, "Back", accent);
     
-    // Toggles Section
+    // --- LEFT SIDE: Toggles (X: 100) ---
     AlarmConfig config = alarmMgr->getAlarmConfig();
+    int toggleX = 100;
+    int toggleY = 150;
+    int gap = 80;
     
-    int toggleY = 120;
-    soundToggle = {550, toggleY, 80, 40};
+    // Toggle Buttons (Draw label to the left, button to the right)
+    soundToggle = {toggleX + 300, toggleY, 80, 40};
     renderToggle(renderer, "Play Sound", soundToggle, config.soundEnabled);
     
-    ledToggle = {550, toggleY + 60, 80, 40};
+    ledToggle = {toggleX + 300, toggleY + gap, 80, 40};
     renderToggle(renderer, "Enable LED", ledToggle, config.ledEnabled);
     
-    strobeToggle = {550, toggleY + 120, 80, 40};
+    strobeToggle = {toggleX + 300, toggleY + gap*2, 80, 40};
     renderToggle(renderer, "Enable Strobe", strobeToggle, config.strobeEnabled);
     
-    pillboxToggle = {550, toggleY + 180, 80, 40};
+    pillboxToggle = {toggleX + 300, toggleY + gap*3, 80, 40};
     renderToggle(renderer, "Open Pillbox", pillboxToggle, config.pillboxEnabled);
     
-    // Audio Selection List
-    renderText(renderer, "Alarm Sound:", 50, 400, white, font);
-    
-    int listY = 450;
+    // --- RIGHT SIDE: Audio List (X: 600) ---
+    int listX = 600;
+    int listY = 100;
+    int listW = 600;
     int itemH = 60;
     
-    // Default Option
-    SDL_Rect defRect = {50, listY, 620, 50};
-    if (selectedAudioIndex == -1) SDL_SetRenderDrawColor(renderer, 60, 90, 150, 255);
-    else SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
-    SDL_RenderFillRect(renderer, &defRect);
-    renderText(renderer, "Default Alarm (Beep)", 70, listY + 10, white, smallFont);
+    renderText(renderer, "Select Alarm Sound", listX, listY, white, font);
     
-    // Song List
+    // 1. Default Option
+    int contentStart = listY + 60;
+    SDL_Rect defRect = {listX, contentStart, listW, itemH - 10};
+    
+    if (selectedAudioIndex == -1) SDL_SetRenderDrawColor(renderer, 60, 90, 150, 255); // Highlight
+    else SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
+    
+    SDL_RenderFillRect(renderer, &defRect);
+    renderText(renderer, "Default Alarm (Beep)", listX + 20, contentStart + 12, white, smallFont);
+    
+    // 2. Song List
+    int songsY = contentStart + itemH;
     for(int i=0; i<8 && (i + scrollOffset) < availableSongs.size(); i++) {
         int idx = i + scrollOffset;
-        SDL_Rect itemRect = {50, listY + 55 + (i * 55), 620, 50};
+        SDL_Rect itemRect = {listX, songsY + (i * itemH), listW, itemH - 10};
         
         if (idx == selectedAudioIndex) SDL_SetRenderDrawColor(renderer, 60, 90, 150, 255);
         else SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
         
         SDL_RenderFillRect(renderer, &itemRect);
-        renderText(renderer, availableSongs[idx].title, 70, itemRect.y + 10, white, smallFont);
+        renderText(renderer, availableSongs[idx].title, listX + 20, itemRect.y + 12, white, smallFont);
     }
-    
-    SDL_RenderPresent(renderer);
 }
 
 void AlarmsPage::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_FINGERDOWN) {
-        int x = (e.type == SDL_MOUSEBUTTONDOWN) ? e.button.x : e.tfinger.x * 720;
-        int y = (e.type == SDL_MOUSEBUTTONDOWN) ? e.button.y : e.tfinger.y * 1280;
+        int x, y;
+        
+        if (e.type == SDL_MOUSEBUTTONDOWN) {
+            x = e.button.x;
+            y = e.button.y;
+        } else {
+            // FIX: Use Landscape dimensions (1280x720)
+            x = static_cast<int>(e.tfinger.x * 1280);
+            y = static_cast<int>(e.tfinger.y * 720);
+        }
         
         if (isPointInRect(x, y, backButton)) {
             pageRequest = PageType::MAIN;
@@ -98,23 +113,30 @@ void AlarmsPage::handleEvent(const SDL_Event& e) {
         AlarmConfig config = alarmMgr->getAlarmConfig();
         bool changed = false;
         
+        // Check Toggles
         if (isPointInRect(x, y, soundToggle)) { config.soundEnabled = !config.soundEnabled; changed = true; }
         if (isPointInRect(x, y, ledToggle)) { config.ledEnabled = !config.ledEnabled; changed = true; }
         if (isPointInRect(x, y, strobeToggle)) { config.strobeEnabled = !config.strobeEnabled; changed = true; }
         if (isPointInRect(x, y, pillboxToggle)) { config.pillboxEnabled = !config.pillboxEnabled; changed = true; }
         
-        // Audio Selection
-        int listY = 450;
-        // Check Default
-        if (isPointInRect(x, y, {50, listY, 620, 50})) {
+        // Check Audio Selection
+        int listX = 600;
+        int listY = 100;
+        int itemH = 60;
+        int contentStart = listY + 60;
+
+        // 1. Check Default
+        SDL_Rect defRect = {listX, contentStart, 600, itemH - 10};
+        if (isPointInRect(x, y, defRect)) {
             config.alarmAudioPath = "default";
             selectedAudioIndex = -1;
             changed = true;
         }
         
-        // Check Songs
+        // 2. Check Songs
+        int songsY = contentStart + itemH;
         for(int i=0; i<8 && (i + scrollOffset) < availableSongs.size(); i++) {
-            SDL_Rect itemRect = {50, listY + 55 + (i * 55), 620, 50};
+            SDL_Rect itemRect = {listX, songsY + (i * itemH), 600, itemH - 10};
             if (isPointInRect(x, y, itemRect)) {
                 selectedAudioIndex = i + scrollOffset;
                 config.alarmAudioPath = availableSongs[selectedAudioIndex].filePath;
@@ -122,22 +144,24 @@ void AlarmsPage::handleEvent(const SDL_Event& e) {
             }
         }
         
-        if (changed) alarmMgr->setAlarmConfig(config);
+        if (changed) {
+            alarmMgr->setAlarmConfig(config);
+        }
     }
 }
 
 void AlarmsPage::renderToggle(SDL_Renderer* renderer, const std::string& label, const SDL_Rect& rect, bool state) {
     SDL_Color white = {255, 255, 255, 255};
-    renderText(renderer, label, 50, rect.y + 5, white, font);
+    // Draw label to the LEFT of the toggle box
+    renderText(renderer, label, rect.x - 300, rect.y + 5, white, font);
     
-    SDL_SetRenderDrawColor(renderer, state ? 80 : 80, state ? 200 : 80, 80, 255); // Green if true, Gray/Red if false
+    SDL_SetRenderDrawColor(renderer, state ? 80 : 80, state ? 200 : 80, 80, 255);
     SDL_RenderFillRect(renderer, &rect);
     
     SDL_Color black = {0,0,0,255};
     renderText(renderer, state ? "ON" : "OFF", rect.x + 15, rect.y + 8, black, smallFont);
 }
 
-// Helpers (renderText, renderButton, isPointInRect) same as other pages...
 void AlarmsPage::renderText(SDL_Renderer* renderer, const std::string& text, int x, int y, SDL_Color color, TTF_Font* f) {
     if (!f) return;
     SDL_Surface* surf = TTF_RenderText_Blended(f, text.c_str(), color);
@@ -154,9 +178,10 @@ void AlarmsPage::renderButton(SDL_Renderer* renderer, const SDL_Rect& rect, cons
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
     SDL_RenderFillRect(renderer, &rect);
     SDL_Color white = {255,255,255,255};
+    // Center text roughly
     renderText(renderer, text, rect.x + 30, rect.y + 15, white, font);
 }
 
 bool AlarmsPage::isPointInRect(int x, int y, const SDL_Rect& r) {
-    return x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h;
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
