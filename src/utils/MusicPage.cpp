@@ -81,7 +81,7 @@ void MusicPage::render(SDL_Renderer* renderer) {
         SDL_RenderFillRect(renderer, &slider.trackRect);
         
         uint8_t val = eqMgr->getBand(slider.bandIndex);
-        float percent = (float)val / 255.0f;
+        float percent = (float)val / 58.0f;
         int knobH = 30;
         int knobY = slider.trackRect.y + slider.trackRect.h - (int)(percent * slider.trackRect.h) - (knobH/2);
         
@@ -202,7 +202,7 @@ void MusicPage::handleEvent(const SDL_Event& e) {
                 if (pct < 0.0f) pct = 0.0f;
                 if (pct > 1.0f) pct = 1.0f;
                 
-                uint8_t newVal = (uint8_t)(pct * 255);
+                uint8_t newVal = (uint8_t)(pct * 58);
                 
                 // Update Manager Directly
                 eqMgr->setBand(slider.bandIndex, newVal);
