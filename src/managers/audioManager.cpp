@@ -8,7 +8,7 @@ audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : c
     system("mkdir -p /mnt/sdcard");
     scanForSongs();
 
-    setVolume(50);
+    setVolume(75);
 
     if (m_eventBus) {
         m_eventBus->subscribe<AlarmTriggeredEvent>(this, &audioManager::onAlarmTriggered);
@@ -91,7 +91,7 @@ void audioManager::playSongAtIndex(size_t index) {
         pos += 4;
     }
 
-    setOutput(AudioOutput::JACK);
+    setOutput(AudioOutput::AUTO);
     
     // Play song and automatically continue to next when finished
     std::string command = "setsid " + CMD_PREFIX + "mpg123 -o pulse -q '" + escapedPath + "' < /dev/null && echo 'SONG_FINISHED' > /tmp/mpg123.log 2>&1 &";
@@ -212,7 +212,7 @@ void audioManager::alarmRing(const std::string& customPath) {
         path = std::string(ALARM_RING_PATH);
     }
     std::string command = "setsid " + CMD_PREFIX + "mpg123 -o pulse -q --loop -1 '" + path + "' < /dev/null > /dev/null 2>&1 &";
-    setVolume(100); // max volume for alarm
+    setVolume(75); // max volume for alarm
 
     system(command.c_str());
     currentState = AudioState::PLAYING;
@@ -238,7 +238,7 @@ void audioManager::onAlarmTriggered(const AlarmTriggeredEvent& event) {
 void audioManager::onAlarmCleared(const AlarmClearedEvent& event) {
     std::cout << "audioManager: alarm cleared" << std::endl;
     stop();
-    setVolume(50);
+    setVolume(75);
     //setVolume to previous
 }
 

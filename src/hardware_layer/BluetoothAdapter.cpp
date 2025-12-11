@@ -3,7 +3,7 @@
 #include <memory>
 #include <array>
 
-BluetoothAdapter::BluetoothAdapter() : connected(false), speakerID("44:1D:64:AE:53:4E"), bluetoothEnabled(false) {}
+BluetoothAdapter::BluetoothAdapter() : connected(false), speakerID("44:1D:64:AE:52:E2"), bluetoothEnabled(false) {}
 BluetoothAdapter::~BluetoothAdapter() {}
 
 std::string BluetoothAdapter::stringToHex(const std::string& input) {
@@ -16,14 +16,11 @@ std::string BluetoothAdapter::stringToHex(const std::string& input) {
 
 bool BluetoothAdapter::sendGattMessage(const std::string& handle, const std::string& message, std::string deviceAddr) {
     std::string target = speakerID;
-    std::cout << "[bt] send gatt to : " << target << std::endl;
-
-    std::string hexMsg = stringToHex("alarm");
-    
+    std::cout << "[bt] send gatt to : " << target << std::endl;    
 
 
     
-    int result = system("sudo gatttool -i hci0 -b 44:1D:64:AE:53:4E --char-write-req -a 0x002a -n 616c61726d");
+    int result = system("sudo gatttool -i hci0 -b 44:1D:64:AE:52:E2 --char-write-req -a 0x002a -n 616c61726d");
     
     if (result == 0) {
         std::cout << "[BLE] Message sent successfully." << std::endl;

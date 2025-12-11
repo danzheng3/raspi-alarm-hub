@@ -165,12 +165,11 @@ void alarmManager::setLEDsToCurrentDay() {
     
     int currentDay = timeMgr.getCurrentLEDDay();
     
-    if (currentDay != lastCheckedLEDDay) {
-        if (ledController->setLED(currentDay)) {
-            std::cout << "[AlarmMgr] LED Day updated to: " << currentDay << std::endl;
-            lastCheckedLEDDay = currentDay;
-        }
+    if (ledController->setLED(currentDay)) {
+        std::cout << "[AlarmMgr] LED Day updated to: " << currentDay << std::endl;
+        lastCheckedLEDDay = currentDay;
     }
+
 }
 
 int alarmManager::readStrobeState() { // <--- ADDED
