@@ -31,6 +31,7 @@ public:
         btAdapter.sendGattMessage(handle, message);
     }
 
+    bool getDockSwitchState();
 private:
     WifiAdapter& wifiAdapter;
     BluetoothAdapter& btAdapter;

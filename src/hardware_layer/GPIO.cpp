@@ -64,8 +64,8 @@ bool GPIOPin::pinModeIn(GPIOBias bias) {
     return ret == 0;
 }
 
-bool GPIOPin::pinRead() {
-    return gpiod_line_get_value(line) == 1;
+int GPIOPin::pinRead() {
+    return gpiod_line_get_value(line);
 }
 
 #else

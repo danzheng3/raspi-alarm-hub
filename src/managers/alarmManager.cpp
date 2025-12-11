@@ -110,6 +110,29 @@ void alarmManager::debugStrobe(bool state) {
     }
 }
 
+void alarmManager::debugLEDs(bool state) {
+    if (ledController) {
+        if (state) {
+            // 7 = Binary 111 (Turn A0, A1, A2 ALL ON)
+            ledController->setLED(7); 
+            std::cout << "[DEBUG] LEDs (GPIO 22, 23, 24) set to ON" << std::endl;
+        } else {
+            ledController->turnOff();
+            std::cout << "[DEBUG] LEDs set to OFF" << std::endl;
+        }
+    }
+}
+
+bool alarmManager::getResetButtonState() {
+    if (resetButton) return resetButton->pinRead();
+    return false;
+}
+
+bool alarmManager::getEnableSwitchState() {
+    if (enableSwitch) return enableSwitch->pinRead();
+    return false;
+}
+
 void alarmManager::setAlarm(const std::string& time) {
     alarmTime = time;
     alarmEnabled = true;
@@ -126,11 +149,11 @@ void alarmManager::setAlarm(const std::string& time) {
     }
 }
 
-bool alarmManager::readStrobeState() { // <--- ADDED
+int alarmManager::readStrobeState() { // <--- ADDED
     if (strobeController) {
         return strobeController->strobeRead();
     }
-    return false;
+    return -2;
 }
 
 bool alarmManager::isAlarmEnabled() const {

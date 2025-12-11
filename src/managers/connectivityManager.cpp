@@ -203,3 +203,8 @@ void connectivityManager::checkDockStatus() {
         }
     }
 }
+
+bool connectivityManager::getDockSwitchState() {
+    if (dockDetectPin) return dockDetectPin->pinRead();
+    return false; // Default low if error
+}

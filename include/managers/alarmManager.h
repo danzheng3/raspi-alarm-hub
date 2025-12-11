@@ -44,8 +44,14 @@ class alarmManager {
         void setAlarmConfig(const AlarmConfig& config);
         AlarmConfig getAlarmConfig() const { return alarmConfig; }
 
+        //DEBUGGING
+
         void debugStrobe(bool state);
-        bool readStrobeState();
+        int readStrobeState();
+
+        void debugLEDs(bool state); // Controls GPIO 22, 23, 24
+        bool getResetButtonState(); // Reads GPIO 16
+        bool getEnableSwitchState(); // Reads GPIO 17
 
     private:
         timeManager& timeMgr;
@@ -64,7 +70,6 @@ class alarmManager {
         //hardware devices
         std::unique_ptr<LED> ledController;
         std::unique_ptr<strobe> strobeController;
-        std::unique_ptr<pillbox> pillboxController;
 
         //button switch for alarm state
         std::unique_ptr<GPIOPin> resetButton; //16

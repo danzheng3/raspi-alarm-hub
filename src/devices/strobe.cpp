@@ -13,7 +13,7 @@ bool strobe::strobeActivate() {
     return strobePin.pinHigh();
 }
 
-bool strobe::strobeRead() {
+int strobe::strobeRead() {
     return strobePin.pinRead();
 }
 

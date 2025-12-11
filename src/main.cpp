@@ -97,10 +97,40 @@ int main() {
     std::cout << "System ready!" << std::endl;
     std::cout << "========================================\n" << std::endl;
 
+    std::cout << "\n[TEST] --- STARTING HARDWARE CHECK ---" << std::endl;
+
     alarmMgr.debugStrobe(true);
-    bool isHigh = alarmMgr.readStrobeState();
-    std::cout << "[DEBUG] Strobe (GPIO 25) read status: " 
-              << (isHigh ? "HIGH (SUCCESS)" : "LOW (FAILURE)") << std::endl;
+    alarmMgr.debugLEDs(true);
+
+    bool strobeStatus = alarmMgr.readStrobeState();
+    std::cout << "[TEST] Strobe (GPIO 25) Raw Status: " << strobeStatus;
+    
+    if (strobeStatus == 1) std::cout << " (HIGH - SUCCESS)" << std::endl;
+    else if (strobeStatus == 0) std::cout << " (LOW - FAIL)" << std::endl;
+    else if (strobeStatus == -1) std::cout << " (ERROR - GPIOD READ FAILED)" << std::endl;
+    else std::cout << " (UNKNOWN ERROR)" << std::endl;
+
+    std::cout << "\n[TEST] Reading Input States:" << std::endl;
+
+    // Reset Button (GPIO 16) - Pull Up (Default HIGH)
+    bool resetState = alarmMgr.getResetButtonState();
+    std::cout << "  -> Reset Button (GPIO 16): " << resetState 
+              << (resetState ? " (HIGH/RELEASED)" : " (LOW/PRESSED)") << std::endl;
+
+    // Enable Switch (GPIO 17) - Pull Up (Default HIGH)
+    bool enableState = alarmMgr.getEnableSwitchState();
+    std::cout << "  -> Enable Switch (GPIO 17): " << enableState
+              << (enableState ? " (HIGH/OFF)" : " (LOW/ON)") << std::endl;
+
+    // Dock Detect (GPIO 27) - Pull Up (Default HIGH)
+    bool dockState = connMgr.getDockSwitchState();
+    std::cout << "  -> Dock Detect (GPIO 27):  " << dockState
+              << (dockState ? " (HIGH/UNDOCKED)" : " (LOW/DOCKED)") << std::endl;
+
+    std::cout << "[TEST] --- HARDWARE CHECK COMPLETE ---\n\n" << std::endl;
+    // ==========================================
+
+    
 
 
 

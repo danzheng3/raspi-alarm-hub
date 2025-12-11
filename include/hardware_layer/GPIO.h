@@ -17,7 +17,7 @@ class GPIOPin {
         bool pinLow();
         bool pinModeOut(); // set pin as I/O
         bool pinModeIn(GPIOBias bias = GPIOBias::NONE);
-        bool pinRead(); //pin state
+        int pinRead(); //pin state
     private:
         int pinNumber;
         gpiod_chip* chip;
