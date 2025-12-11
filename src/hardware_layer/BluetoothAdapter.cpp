@@ -20,12 +20,8 @@ bool BluetoothAdapter::sendGattMessage(const std::string& handle, const std::str
 
     std::string hexMsg = stringToHex("alarm");
     
-    // Construct command: gatttool -b <MAC> --char-write-req -a <HANDLE> -n <HEX_VALUE>
-    // Note: gatttool often requires root privileges to access the HCI interface directly.
-    std::string gattCommand = "connect\\nchar-write-cmd 0x002a 616c61726d";
-    std::string fullCommand = "echo -e \"" + gattCommand + "\" | sudo gatttool -i hci0 -b 44:1D:64:AE:53:4E -I";
 
-    std::cout << "[BLE] Executing send" << std::endl;
+
     
     int result = system("sudo gatttool -i hci0 -b 44:1D:64:AE:53:4E --char-write-req -a 0x002a -n 616c61726d");
     
@@ -61,8 +57,8 @@ void BluetoothAdapter::initialize() {
 }
 
 bool BluetoothAdapter::isConnected() {
-    std::string output = runCommand("bluetoothctl info " + speakerID);
-    return output.find("Connected: yes") != std::string::npos;
+    std::string output = runCommand("hcitool con");
+    return output.find("CENTRAL") != std::string::npos;
 }
 
 bool BluetoothAdapter::connectToDevice(const std::string& deviceAddress) {

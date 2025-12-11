@@ -25,6 +25,8 @@ alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, connec
     enableSwitch = std::make_unique<GPIOPin>(17);
     enableSwitch->pinModeIn(GPIOBias::PULL_UP);
 
+    // setLEDsToCurrentDay();
+
 
     std::cout << "alarmManager initialized" << std::endl;
     std::cout << "  Alarm time: " << alarmTime << std::endl;
@@ -146,6 +148,7 @@ void alarmManager::setAlarm(const std::string& time) {
     alarmTriggered = false;
     std::cout << "set alarm " << alarmTime << std::endl;
 
+
     saveToStorage();
 
     // publish event
@@ -153,6 +156,20 @@ void alarmManager::setAlarm(const std::string& time) {
         AlarmSetEvent event;
         event.newTime = time;
         m_eventBus->publish(event);
+    }
+}
+
+// --- NEW INTERNAL LED DAY SETTER ---
+void alarmManager::setLEDsToCurrentDay() {
+    if (!ledController || !alarmConfig.ledEnabled) return;
+    
+    int currentDay = timeMgr.getCurrentLEDDay();
+    
+    if (currentDay != lastCheckedLEDDay) {
+        if (ledController->setLED(currentDay)) {
+            std::cout << "[AlarmMgr] LED Day updated to: " << currentDay << std::endl;
+            lastCheckedLEDDay = currentDay;
+        }
     }
 }
 
@@ -221,9 +238,8 @@ void alarmManager::triggerAlarmActions() {
     
     if (alarmConfig.ledEnabled && ledController) {
         
-        if (ledController->setLED(alarmConfig.ledDayOfWeek)) {
-            std::cout << "Alarm: LED activated (day " << alarmConfig.ledDayOfWeek << ")" << std::endl;
-        }
+        setLEDsToCurrentDay();
+        std::cout << "Alarm: LED set for day " << alarmConfig.ledDayOfWeek << std::endl;
     }
 
     if (alarmConfig.strobeEnabled && strobeController) {
@@ -268,7 +284,7 @@ void alarmManager::checkPhysicalControls() {
     if (lastResetState == true && currentResetState == false) {
         std::cout << "[Hardware] Alarm Reset Button Pressed" << std::endl;
 
-        if (connMgr.isBluetoothConnected()) {
+        if (connMgr.isBluetoothConnected() && !connMgr.getDockSwitchState() && 0) { // TEST1
             std::cout << "[AlarmMgr] button ignored (speaker connected)" << std::endl;
         } else {
             std::cout << "[AlarmMgr] processing alarm reset" << std::endl;

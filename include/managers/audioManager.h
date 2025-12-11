@@ -62,7 +62,7 @@ class audioManager {
         std::vector<Song> songList;
         size_t currentIndex=0;
 
-        std::string jackSink = "alsa_output.platform-fe00b840.mailbox.stereo-fallback"; // need to set sink name
+        std::string jackSink = "alsa_output.platform-fe00b840.mailbox.stereo-fallback"; 
         std::string btSink = "bluetooth-default"; // need to set sink name!
 
         //internal helper

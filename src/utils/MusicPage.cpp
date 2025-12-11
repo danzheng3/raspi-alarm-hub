@@ -36,6 +36,7 @@ void MusicPage::initEQSliders() {
         slider.bandIndex = i;
         slider.label = labels[i];
         slider.trackRect = {startX + (i * spacing), startY, width, height};
+        slider.knobRect = {startX + (i * spacing) - 5, startY + height - 15, width + 10, 30}; // Default knob pos
         eqSliders.push_back(slider);
     }
 }
@@ -72,29 +73,44 @@ void MusicPage::render(SDL_Renderer* renderer) {
     }
 
     // --- RIGHT SIDE: Equalizer ---
-    renderText(renderer, "Equalizer", 700, listY - 40, white, buttonFont);
+    renderText(renderer, "Equalizer", 700, 80, white, buttonFont);
     
     // Render sliders (logic remains similar, using new coordinates from initEQSliders)
     for (const auto& slider : eqSliders) {
-        // Track
+        // 1. Draw Track Background
         SDL_SetRenderDrawColor(renderer, 60, 60, 70, 255);
         SDL_RenderFillRect(renderer, &slider.trackRect);
         
         uint8_t val = eqMgr->getBand(slider.bandIndex);
-        float percent = (float)val / 58.0f;
-        int knobH = 30;
-        int knobY = slider.trackRect.y + slider.trackRect.h - (int)(percent * slider.trackRect.h) - (knobH/2);
         
-        // Clamp
-        if (knobY < slider.trackRect.y) knobY = slider.trackRect.y;
-        if (knobY > slider.trackRect.y + slider.trackRect.h - knobH) knobY = slider.trackRect.y + slider.trackRect.h - knobH;
+        // --- RENDER LOGIC: Map 255 (Low) -> 190 (High) to 0.0 -> 1.0 ---
+        float range = 65.0f; // 255 - 190
+        float percent = (255.0f - (float)val) / range;
+        
+        if (percent < 0.0f) percent = 0.0f;
+        if (percent > 1.0f) percent = 1.0f;
 
-        // Fill
-        SDL_Rect fillRect = {slider.trackRect.x, knobY + (knobH/2), slider.trackRect.w, (slider.trackRect.y + slider.trackRect.h) - (knobY + (knobH/2))};
+        // Calculate Y (Top is 0.0 distance from y, Bottom is height distance)
+        // percent 1.0 -> y offset 0
+        // percent 0.0 -> y offset height
+        int knobH = 30;
+        int activeHeight = (int)(percent * slider.trackRect.h);
+        int knobY = slider.trackRect.y + slider.trackRect.h - activeHeight - (knobH/2);
+        
+        // Clamp Visuals
+        if (knobY < slider.trackRect.y) knobY = slider.trackRect.y;
+        if (knobY > slider.trackRect.y + slider.trackRect.h - knobH) 
+            knobY = slider.trackRect.y + slider.trackRect.h - knobH;
+
+        // 2. Draw Filled Part (Green) - From Knob to Bottom
+        int fillY = knobY + (knobH/2);
+        int fillH = (slider.trackRect.y + slider.trackRect.h) - fillY;
+        SDL_Rect fillRect = {slider.trackRect.x, fillY, slider.trackRect.w, fillH};
+        
         SDL_SetRenderDrawColor(renderer, 30, 215, 96, 255);
         SDL_RenderFillRect(renderer, &fillRect);
 
-        // Knob
+        // 3. Draw Knob
         SDL_Rect knob = {slider.trackRect.x - 5, knobY, slider.trackRect.w + 10, knobH};
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &knob);
@@ -192,22 +208,33 @@ void MusicPage::handleEvent(const SDL_Event& e) {
 
         // Handle EQ Sliders (Click or Drag)
         for (const auto& slider : eqSliders) {
-            // Check if touch is roughly in the column of the slider
-            if (x >= slider.trackRect.x && x <= slider.trackRect.x + slider.trackRect.w &&
-                y >= slider.trackRect.y - 20 && y <= slider.trackRect.y + slider.trackRect.h + 20) {
+            // Widen the hit box by 30px on each side for easier touch
+            int hitX1 = slider.trackRect.x - 30;
+            int hitX2 = slider.trackRect.x + slider.trackRect.w + 30;
+            int hitY1 = slider.trackRect.y - 20;
+            int hitY2 = slider.trackRect.y + slider.trackRect.h + 20;
+
+            if (x >= hitX1 && x <= hitX2 && y >= hitY1 && y <= hitY2) {
                 
-                // Calculate Value
+                // 1. Calculate Percentage (0.0 = Bottom, 1.0 = Top)
                 int relativeY = y - slider.trackRect.y;
                 float pct = 1.0f - ((float)relativeY / (float)slider.trackRect.h);
+                
                 if (pct < 0.0f) pct = 0.0f;
                 if (pct > 1.0f) pct = 1.0f;
                 
-                uint8_t newVal = (uint8_t)(pct * 58);
+                // 2. Map Percentage to Range [255 ... 190]
+                // 0.0 -> 255
+                // 1.0 -> 190
+                // Range Span = 65
                 
-                // Update Manager Directly
+                uint8_t newVal = 255 - (uint8_t)(pct * 65.0f);
+                
+                // Clamp
+                if (newVal > 255) newVal = 255;
+                if (newVal < 190) newVal = 190;
+                
                 eqMgr->setBand(slider.bandIndex, newVal);
-                
-                // publish ui event here if needed
             }
         }
         

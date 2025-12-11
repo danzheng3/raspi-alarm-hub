@@ -29,6 +29,7 @@ class timeManager {
         bool trySyncFromNTP();
 
         void checkAndPublishTimeUpdate();
+        int getCurrentLEDDay() const; 
     
     private:
         std::string lastPublishedTime;

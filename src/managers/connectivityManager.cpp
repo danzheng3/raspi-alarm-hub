@@ -5,7 +5,13 @@ connectivityManager::connectivityManager(WifiAdapter& wifiAdapter, BluetoothAdap
     : wifiAdapter(wifiAdapter), btAdapter(btAdapter), storage(storage), m_eventBus(eventBus) {
         init();
         dockDetectPin = std::make_unique<GPIOPin>(27);
-        dockDetectPin->pinModeIn(GPIOBias::PULL_UP);
+        bool success = dockDetectPin->pinModeIn(GPIOBias::PULL_UP);
+
+        if (success) {
+            std::cout << "[ConnMgr] GPIO 27 (Dock) initialized successfully." << std::endl;
+        } else {
+            std::cerr << "[ConnMgr] ERROR: Failed to initialize GPIO 27! Pin might be busy or invalid." << std::endl;
+        }
 
         std::cout << "[connMgr] Pin27 dock detection initialized" << std::endl;
 
@@ -184,6 +190,7 @@ void connectivityManager::checkDockStatus() {
 
     // READ: 0 = Connected (Grounded), 1 = Disconnected (Pulled Up)
     bool physicallyConnected = (dockDetectPin->pinRead() == 0);
+    // std::cout << "[connMgr] dock detect status : " << (physicallyConnected ? "DOCKED" : "UNDOCKED") << std::endl;
 
     if (physicallyConnected != isDocked) {
         isDocked = physicallyConnected;

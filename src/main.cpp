@@ -99,8 +99,8 @@ int main() {
 
     std::cout << "\n[TEST] --- STARTING HARDWARE CHECK ---" << std::endl;
 
-    alarmMgr.debugStrobe(true);
-    alarmMgr.debugLEDs(true);
+    //alarmMgr.debugStrobe(true);
+    //alarmMgr.debugLEDs(true);
 
     bool strobeStatus = alarmMgr.readStrobeState();
     std::cout << "[TEST] Strobe (GPIO 25) Raw Status: " << strobeStatus;
@@ -140,7 +140,7 @@ int main() {
 
             // -- hardware check --
             connMgr.checkDockStatus();
-            //alarmMgr.checkPhysicalControls(); //UNCOMMENTED BC OF PHYSICAL RN
+            alarmMgr.checkPhysicalControls(); //UNCOMMENTED BC OF PHYSICAL RN
             
             // Check if alarm should trigger
             if (alarmMgr.shouldTrigger()) {

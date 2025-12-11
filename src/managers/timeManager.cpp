@@ -123,6 +123,20 @@ bool timeManager::syncFromRTC() {
 
 }
 
+int timeManager::getCurrentLEDDay() const {
+    struct tm time = getSystemTime();
+    int tm_wday = time.tm_wday; // 0=Sunday, 6=Saturday
+    
+    // Mapping: 0(Sun)->7, 1(Mon)->6, ..., 6(Sat)->1
+    int ledDay = 7 - tm_wday;
+
+    // Safety clamp (although formula ensures 1-7)
+    if (ledDay < 1) ledDay = 1;
+    if (ledDay > 7) ledDay = 7;
+    
+    return ledDay;
+}
+
 void timeManager::updateRTC() {
     struct tm time = getSystemTime();
     RTC_Time rtcTime = tmToRtc(time);

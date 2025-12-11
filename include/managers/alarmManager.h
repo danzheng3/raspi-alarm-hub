@@ -38,6 +38,7 @@ class alarmManager {
         //triggering
         bool shouldTrigger();
         void resetTrigger();
+        int lastCheckedLEDDay =0;
 
         void simulateHardwareReset(); 
         //configuration
@@ -45,6 +46,7 @@ class alarmManager {
         AlarmConfig getAlarmConfig() const { return alarmConfig; }
 
         //DEBUGGING
+        void setLEDsToCurrentDay(); // <--- NEW INTERNAL METHOD
 
         void debugStrobe(bool state);
         int readStrobeState();

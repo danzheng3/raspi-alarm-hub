@@ -11,17 +11,16 @@ LED::~LED() {
 }
 
 bool LED::setLED(int dayOfWeek) {
-    // dayOfWeek is 0-6 for Sunday-Saturday
+    // The input dayOfWeek (1=Sat to 7=Sun) is directly used as the MUX address.
+    int muxAddress = dayOfWeek; 
 
-    int muxAddress = dayOfWeek - 1;
-
-    // Safety check to prevent weird behavior if 0 or >8 is passed
     if (muxAddress < 0) muxAddress = 0; 
-    if (muxAddress > 7) muxAddress = 7; // Or return false
+    if (muxAddress > 7) muxAddress = 7; 
 
-    bool a0State = muxAddress & 0x01;
-    bool a1State = (muxAddress >> 1) & 0x01;
-    bool a2State = (muxAddress >> 2) & 0x01;
+    // Decode the 3-bit address (muxAddress is now between 0 and 7)
+    bool a0State = muxAddress & 0x01;        // A0 (GPIO 22) = LSB
+    bool a1State = (muxAddress >> 1) & 0x01; // A1 (GPIO 23)
+    bool a2State = (muxAddress >> 2) & 0x01; // A2 (GPIO 24) = MSB
 
     if (a0State) A0Pin.pinHigh(); else A0Pin.pinLow();
     if (a1State) A1Pin.pinHigh(); else A1Pin.pinLow();
