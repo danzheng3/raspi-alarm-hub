@@ -12,6 +12,10 @@
 #define SERVO_CCW_SPEED_US 1600 //1.6 ms
 #define OPEN_DURATION_MS 1000 // NEED TO MANUALLY ADJUST FIX LATER
 
+#define SERVO_OPEN_POS_US 2000
+#define SERVO_CLOSED_POS_US 1000
+#define MAX_OPEN_TIME_MS 1000
+
 class pillbox {
     public:
         pillbox();

@@ -27,7 +27,7 @@ GPIOPin::~GPIOPin() {
 
 bool GPIOPin::pinHigh() {
     int ret;
-    printf("Setting GPIO %d HIGH\n", pinNumber);
+    std::cout << "Setting GPIO " << pinNumber << " high" << std::endl;
     ret = gpiod_line_set_value(line, 1);
 
     return ret == 0;

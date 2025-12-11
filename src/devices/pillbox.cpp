@@ -23,9 +23,10 @@ bool pillbox::openPillbox() {
         return true;
     }
 
-    gpioServo(PILLBOX_PWM_PIN, SERVO_CCW_SPEED_US);
+    gpioServo(PILLBOX_PWM_PIN, SERVO_OPEN_POS_US);
     std::this_thread::sleep_for(std::chrono::milliseconds(OPEN_DURATION_MS));
-    gpioServo(PILLBOX_PWM_PIN, SERVO_NEUTRAL_US);
+    // TURNED OFF TO DETACH
+    //gpioServo(PILLBOX_PWM_PIN, 0);
     pillboxState=true;
     return true;
 }
@@ -39,10 +40,10 @@ bool pillbox::closePillbox() {
     std::cout << "Closing Pillbox..." << std::endl;
     // close CW
 
-    gpioServo(PILLBOX_PWM_PIN, SERVO_CW_SPEED_US);
+    gpioServo(PILLBOX_PWM_PIN, SERVO_CLOSED_POS_US); // MOVE TO CLOSED POS ANGLE
 
     std::this_thread::sleep_for(std::chrono::milliseconds(OPEN_DURATION_MS));
-    gpioServo(PILLBOX_PWM_PIN, SERVO_NEUTRAL_US);
+    gpioServo(PILLBOX_PWM_PIN, 0); // TURN OFF TO DETACH
 
     pillboxState = false;
     return true;

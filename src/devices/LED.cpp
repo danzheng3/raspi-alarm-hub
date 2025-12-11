@@ -13,27 +13,19 @@ LED::~LED() {
 bool LED::setLED(int dayOfWeek) {
     // dayOfWeek is 0-6 for Sunday-Saturday
 
-    bool a0State = dayOfWeek & 0x01;
-    bool a1State = (dayOfWeek >> 1) & 0x01;
-    bool a2State = (dayOfWeek >> 2) & 0x01;
+    int muxAddress = dayOfWeek - 1;
 
-    if (a0State) {
-        A0Pin.pinHigh();
-    } else {
-        A0Pin.pinLow();
-    }
+    // Safety check to prevent weird behavior if 0 or >8 is passed
+    if (muxAddress < 0) muxAddress = 0; 
+    if (muxAddress > 7) muxAddress = 7; // Or return false
 
-    if (a1State) {
-        A1Pin.pinHigh();
-    } else {
-        A1Pin.pinLow();
-    }
+    bool a0State = muxAddress & 0x01;
+    bool a1State = (muxAddress >> 1) & 0x01;
+    bool a2State = (muxAddress >> 2) & 0x01;
 
-    if (a2State) {
-        A2Pin.pinHigh();
-    } else {
-        A2Pin.pinLow();
-    }
+    if (a0State) A0Pin.pinHigh(); else A0Pin.pinLow();
+    if (a1State) A1Pin.pinHigh(); else A1Pin.pinLow();
+    if (a2State) A2Pin.pinHigh(); else A2Pin.pinLow();
 
     return true;
 }
