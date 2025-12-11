@@ -3,7 +3,8 @@
 #include <iostream>
 
 alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, connectivityManager& connMgr, EventBus* eventBus) 
-    : storage(storage), timeMgr(timeMgr), connMgr(connMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false) {
+    : storage(storage), timeMgr(timeMgr), connMgr(connMgr), m_eventBus(eventBus), alarmEnabled(true), alarmTriggered(false),
+      alarmHandled(false) {
     
     ledController = std::make_unique<LED>();
     strobeController = std::make_unique<strobe>();
@@ -125,10 +126,20 @@ bool alarmManager::shouldTrigger() {
     }
 
     std::string currentTime = timeMgr.getFormattedTime();
+    if (currentTime != alarmTime) {
+        alarmHandled = false;
+        return false;
+    }
+
+    if (alarmHandled) {
+        return false;
+    }
+
     if (currentTime == alarmTime) {
         std::cout << "Alarm triggered at " << currentTime << std::endl;
 
         alarmTriggered = true;
+        alarmHandled = true;
 
         std::thread([this]() {
             triggerAlarmActions();
@@ -152,6 +163,10 @@ bool alarmManager::shouldTrigger() {
 
 void alarmManager::triggerAlarmActions() {
     std::cout << "Triggering alarm actions:" << std::endl;
+
+    std::thread([this]() {
+        connMgr.sendBleAlert("0x002a", "alarm");
+    }).detach();
     
     if (alarmConfig.ledEnabled && ledController) {
         

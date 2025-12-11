@@ -1,11 +1,14 @@
 #include "managers/audioManager.h"
+
+const std::string CMD_PREFIX = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) ";
+
 audioManager::audioManager(connectivityManager* connMgr, EventBus* eventBus) : connMgr(connMgr), m_eventBus(eventBus) {
     
     // ADDED TO /ETC/FSTAB FOR AUTO MOUNT
     system("mkdir -p /mnt/sdcard");
     scanForSongs();
 
-    setVolume(20);
+    setVolume(50);
 
     if (m_eventBus) {
         m_eventBus->subscribe<AlarmTriggeredEvent>(this, &audioManager::onAlarmTriggered);
@@ -73,7 +76,7 @@ void audioManager::playSongAtIndex(size_t index) {
             monitorThread.join();
         }
     }
-    std::string stopCommand = "killall -9 mpg123 2>/dev/null";
+    std::string stopCommand = "sudo -u daniel pkill -9 -x mpg123 2>/dev/null";
     system(stopCommand.c_str());
     currentState = AudioState::STOPPED;
     currentIndex = index;
@@ -88,10 +91,10 @@ void audioManager::playSongAtIndex(size_t index) {
         pos += 4;
     }
 
-    setOutput(AudioOutput::AUTO);
+    setOutput(AudioOutput::JACK);
     
     // Play song and automatically continue to next when finished
-    std::string command = "setsid sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) mpg123 -o pulse -q '" + escapedPath + "' < /dev/null && echo 'SONG_FINISHED' > /tmp/mpg123.log 2>&1 &";
+    std::string command = "setsid " + CMD_PREFIX + "mpg123 -o pulse -q '" + escapedPath + "' < /dev/null && echo 'SONG_FINISHED' > /tmp/mpg123.log 2>&1 &";
     system(command.c_str());
     
     currentState = AudioState::PLAYING;
@@ -103,7 +106,7 @@ void audioManager::playSongAtIndex(size_t index) {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         
         while (currentState == AudioState::PLAYING && monitorActive) {
-            std::string result = runCommand("pgrep mpg123");
+            std::string result = runCommand("pgrep -u daniel -x mpg123");
             if (result.empty()) {
                 playNextSong();
                 break;
@@ -129,7 +132,7 @@ void audioManager::playNextSong() {
 
 void audioManager::pause() {
     if (currentState == AudioState::PLAYING) {
-        std::string command = "pkill -STOP -u daniel -x mpg123";
+        std::string command = "sudo -u daniel pkill -STOP -x mpg123";
         system(command.c_str());
         
         currentState = AudioState::PAUSED;
@@ -139,7 +142,7 @@ void audioManager::pause() {
 
 void audioManager::resume() {
     if (currentState == AudioState::PAUSED) {
-        std::string command = "killall -CONT mpg123 2>/dev/null";
+        std::string command = "sudo -u daniel pkill -CONT -x mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::PLAYING;
         std::cout << "Audio resumed" << std::endl;
@@ -148,19 +151,19 @@ void audioManager::resume() {
 
 void audioManager::stop() {
     if (currentState != AudioState::STOPPED) {
-        std::string command = "killall -9 mpg123 2>/dev/null";
+        std::string command = "sudo -u daniel killall -9 mpg123 2>/dev/null";
         system(command.c_str());
         currentState = AudioState::STOPPED;
         std::cout << "Audio stopped" << std::endl;
     }
 }
 
-void audioManager::setOutput(AudioOutput output) { // NEED TO TEST THIS
+void audioManager::setOutput(AudioOutput output) { 
     std::string sinkToSet = jackSink;
     bool btConnected = connMgr->isBluetoothConnected() && connMgr;
 
     if (output == AudioOutput::BLUETOOTH && btConnected) {
-        std::string result = runCommand("pactl list short sinks | grep bluez");
+        std::string result = runCommand(CMD_PREFIX + "pactl list short sinks | grep bluez");
         if (!result.empty()) {
             std::istringstream iss(result);
             iss >> btSink;
@@ -168,19 +171,19 @@ void audioManager::setOutput(AudioOutput output) { // NEED TO TEST THIS
         }
     } else if (output == AudioOutput::AUTO) {
         if (btConnected) {
-            std::string result = runCommand("pactl list short sinks | grep bluez");
+            std::string result = runCommand(CMD_PREFIX + "pactl list short sinks | grep bluez");
             if (!result.empty()) {
                 std::istringstream iss(result);
                 iss >> btSink;
                 sinkToSet = btSink;
-                std::cout << "[audioMgr] set to bt sink" << btSink << std::endl;
+                std::cout << "[audioMgr] set to bt sink " << btSink << std::endl;
             } else {
                 std::cout << "[audioMgr] bt sink not found" << std::endl;
             }
         }
     }
 
-    std::string command = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) pactl set-default-sink " + sinkToSet;
+    std::string command = CMD_PREFIX + "pactl set-default-sink " + sinkToSet;
     system(command.c_str());
     currentOutput = output;
 }
@@ -189,7 +192,7 @@ void audioManager::setVolume(int volume) { // based on 0-100 percentage
     if (volume < 0) volume = 0;
     if (volume > 100) volume = 100;
 
-    std::string command = "sudo -u daniel XDG_RUNTIME_DIR=/run/user/$(id -u daniel) pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(volume) + "%";    system(command.c_str());
+    std::string command = CMD_PREFIX + "pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(volume) + "%";    system(command.c_str());
     currentVolume = volume;
 
     std::cout << "audioManager: volume set to " << volume << std::endl;
@@ -207,7 +210,7 @@ void audioManager::alarmRing(const std::string& customPath) {
         std::cout << "[audioMgr] custom audio path DNE" << std::endl;
         path = std::string(ALARM_RING_PATH);
     }
-    std::string command = "setsid sudo -u daniel env XDG_RUNTIME_DIR=/run/user/$(id -u daniel) mpg123 -o pulse -q --loop -1 '" + path + "' < /dev/null > /dev/null 2>&1 &";
+    std::string command = "setsid " + CMD_PREFIX + "mpg123 -o pulse -q --loop -1 '" + path + "' < /dev/null > /dev/null 2>&1 &";
     setVolume(100); // max volume for alarm
 
     system(command.c_str());

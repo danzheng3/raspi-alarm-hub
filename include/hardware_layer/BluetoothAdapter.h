@@ -1,4 +1,7 @@
 #include <string>
+#include <vector>
+#include <sstream>
+#include <iomanip>
 
 class BluetoothAdapter {
     public:
@@ -9,8 +12,11 @@ class BluetoothAdapter {
         void disconnect();
         bool isConnected();
 
+        bool sendGattMessage(const std::string& handle, const std::string& message, std::string deviceAddr = "");
+
     private:
         std::string speakerID;
         bool connected;
         bool bluetoothEnabled;
+        std::string stringToHex(const std::string& input);
 };

@@ -101,7 +101,7 @@ void equalizerManager::loadCustomPreset() {
         if (eqStr.empty()) {
             std::cout << "No saved EQ settings, using flat preset" << std::endl;
             for (auto & band : bands) {
-                band.value = 50; // flat CHANGED FROM 128
+                band.value = 5; // flat CHANGED FROM 128
             }
             return;
         }

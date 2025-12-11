@@ -3,8 +3,40 @@
 #include <memory>
 #include <array>
 
-BluetoothAdapter::BluetoothAdapter() : connected(false), speakerID(""), bluetoothEnabled(false) {}
+BluetoothAdapter::BluetoothAdapter() : connected(false), speakerID("44:1D:64:AE:53:4E"), bluetoothEnabled(false) {}
 BluetoothAdapter::~BluetoothAdapter() {}
+
+std::string BluetoothAdapter::stringToHex(const std::string& input) {
+    std::ostringstream ret;
+    for (unsigned char c : input) {
+        ret << std::hex << std::setw(2) << std::setfill('0') << (int)c;
+    }
+    return ret.str();
+}
+
+bool BluetoothAdapter::sendGattMessage(const std::string& handle, const std::string& message, std::string deviceAddr) {
+    std::string target = speakerID;
+    std::cout << "[bt] send gatt to : " << target << std::endl;
+
+    std::string hexMsg = stringToHex("alarm");
+    
+    // Construct command: gatttool -b <MAC> --char-write-req -a <HANDLE> -n <HEX_VALUE>
+    // Note: gatttool often requires root privileges to access the HCI interface directly.
+    std::string gattCommand = "connect\\nchar-write-cmd 0x002a 616c61726d";
+    std::string fullCommand = "echo -e \"" + gattCommand + "\" | sudo gatttool -i hci0 -b 44:1D:64:AE:53:4E -I";
+
+    std::cout << "[BLE] Executing send" << std::endl;
+    
+    int result = system("sudo gatttool -i hci0 -b 44:1D:64:AE:53:4E --char-write-req -a 0x002a -n 616c61726d");
+    
+    if (result == 0) {
+        std::cout << "[BLE] Message sent successfully." << std::endl;
+        return true;
+    } else {
+        std::cerr << "[BLE] Failed to send message. Exit code: " << result << std::endl;
+        return false;
+    }
+}
 
 static std::string runCommand(const std::string& command) {
     std::array<char, 128> buffer;

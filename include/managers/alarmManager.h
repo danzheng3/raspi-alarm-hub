@@ -15,7 +15,7 @@ struct AlarmConfig {
     bool ledEnabled = true;
     bool strobeEnabled = false;
     bool pillboxEnabled = false;
-    int ledDayOfWeek = 0;  // 0-6 for Monday-Sunday
+    int ledDayOfWeek = 0;  // 1-7 for Monday-Sunday
     std::string alarmAudioPath = "default";
 };
 
@@ -54,6 +54,7 @@ class alarmManager {
 
         bool alarmEnabled;
         bool alarmTriggered;
+        bool alarmHandled;
         std::string alarmTime;
         AlarmConfig alarmConfig;
 

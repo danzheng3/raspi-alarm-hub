@@ -26,6 +26,10 @@ public:
     bool isBluetoothConnected();
     void checkDockStatus();
     void checkConnectionStatus();
+    void sendBleAlert(const std::string& handle, const std::string& message) {
+
+        btAdapter.sendGattMessage(handle, message);
+    }
 
 private:
     WifiAdapter& wifiAdapter;
