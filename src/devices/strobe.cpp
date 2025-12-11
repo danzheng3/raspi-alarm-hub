@@ -13,6 +13,10 @@ bool strobe::strobeActivate() {
     return strobePin.pinHigh();
 }
 
+bool strobe::strobeRead() {
+    return strobePin.pinRead();
+}
+
 bool strobe::strobeToNormal() {
     strobeState = false;
     return strobePin.pinLow();

@@ -23,10 +23,10 @@ const std::string I2C_BUS_PATH = "/dev/i2c-1";
 std::atomic<bool> running(true);
 
 int main() {
-    if (gpioInitialise() < 0) {
-        std::cerr << "Failed to initialize GPIO" << std::endl;
-        return 1;
-    }
+    // if (gpioInitialise() < 0) {
+    //     std::cerr << "Failed to initialize GPIO" << std::endl;
+    //     return 1;
+    // }
     std::cout << "eventBus Created" << std::endl;
 
     storageManager storage;
@@ -97,6 +97,11 @@ int main() {
     std::cout << "System ready!" << std::endl;
     std::cout << "========================================\n" << std::endl;
 
+    alarmMgr.debugStrobe(true);
+    bool isHigh = alarmMgr.readStrobeState();
+    std::cout << "[DEBUG] Strobe (GPIO 25) read status: " 
+              << (isHigh ? "HIGH (SUCCESS)" : "LOW (FAILURE)") << std::endl;
+
 
 
     std::thread logicThread([&]() {
@@ -135,7 +140,7 @@ int main() {
     }
 
     #ifndef TEST_MODE
-    gpioTerminate();
+    // gpioTerminate();
     #endif
     std::cout << "Goodbye!" << std::endl;
     return 0;

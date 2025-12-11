@@ -8,7 +8,7 @@ alarmManager::alarmManager(storageManager& storage, timeManager& timeMgr, connec
     
     ledController = std::make_unique<LED>();
     strobeController = std::make_unique<strobe>();
-    pillboxController = std::make_unique<pillbox>();
+    // pillboxController = std::make_unique<pillbox>();
 
     loadFromStorage();
 
@@ -96,6 +96,20 @@ void alarmManager::setAlarmConfig(const AlarmConfig& config) {
     std::cout << "Alarm actions updated" << std::endl;
 }
 
+void alarmManager::debugStrobe(bool state) {
+    if (strobeController) {
+        if (state) {
+            std::cout << "[DEBUG] Forcing Strobe ON (GPIO 25)" << std::endl;
+            strobeController->strobeActivate();
+        } else {
+            std::cout << "[DEBUG] Forcing Strobe OFF" << std::endl;
+            strobeController->strobeToNormal();
+        }
+    } else {
+        std::cerr << "[DEBUG] Strobe controller not initialized!" << std::endl;
+    }
+}
+
 void alarmManager::setAlarm(const std::string& time) {
     alarmTime = time;
     alarmEnabled = true;
@@ -110,6 +124,13 @@ void alarmManager::setAlarm(const std::string& time) {
         event.newTime = time;
         m_eventBus->publish(event);
     }
+}
+
+bool alarmManager::readStrobeState() { // <--- ADDED
+    if (strobeController) {
+        return strobeController->strobeRead();
+    }
+    return false;
 }
 
 bool alarmManager::isAlarmEnabled() const {
@@ -182,11 +203,11 @@ void alarmManager::triggerAlarmActions() {
     }
     
     
-    if (alarmConfig.pillboxEnabled && pillboxController) {
-        if (pillboxController->openPillbox()) {
-            std::cout << "Alarm: Pillbox open" << std::endl;
-        }
-    }
+    // if (alarmConfig.pillboxEnabled && pillboxController) {
+    //     if (pillboxController->openPillbox()) {
+    //         std::cout << "Alarm: Pillbox open" << std::endl;
+    //     }
+    // }
 }
 
 void alarmManager::clearAlarmActions() {
@@ -204,11 +225,11 @@ void alarmManager::clearAlarmActions() {
     
     // Close pillbox
     
-    if (pillboxController) {
-        std::thread([this]() {
-            pillboxController->closePillbox();
-        }).detach();
-    } 
+    // if (pillboxController) {
+    //     std::thread([this]() {
+    //         pillboxController->closePillbox();
+    //     }).detach();
+    // } 
 }
 
 void alarmManager::checkPhysicalControls() {

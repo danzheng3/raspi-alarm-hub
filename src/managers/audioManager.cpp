@@ -184,6 +184,7 @@ void audioManager::setOutput(AudioOutput output) {
     }
 
     std::string command = CMD_PREFIX + "pactl set-default-sink " + sinkToSet;
+    std::cout << "[audiomgr] set output to sink: " << sinkToSet << std::endl;
     system(command.c_str());
     currentOutput = output;
 }

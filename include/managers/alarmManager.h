@@ -44,6 +44,9 @@ class alarmManager {
         void setAlarmConfig(const AlarmConfig& config);
         AlarmConfig getAlarmConfig() const { return alarmConfig; }
 
+        void debugStrobe(bool state);
+        bool readStrobeState();
+
     private:
         timeManager& timeMgr;
         storageManager& storage;

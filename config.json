@@ -1,6 +1,6 @@
 {
-    "alarm_actions": "{\"alarm_audio_path\":\"/home/daniel/Music/Chopin - Nocturne op.9 No.2.mp3\",\"led\":false,\"led_day\":1,\"pillbox\":true,\"sound\":true,\"strobe\":true}",
-    "alarm_time": "20:53",
+    "alarm_actions": "{\"alarm_audio_path\":\"/home/daniel/Music/Chopin - Nocturne op.9 No.2.mp3\",\"led\":true,\"led_day\":1,\"pillbox\":true,\"sound\":true,\"strobe\":true}",
+    "alarm_time": "23:59",
     "audio_settings": {
         "alarm_volume": 100,
         "default_volume": 50,

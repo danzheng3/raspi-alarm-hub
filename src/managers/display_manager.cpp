@@ -143,8 +143,8 @@ void DisplayManager::run(std::atomic<bool>& running) {
                 int screenY = event.button.y;
                 
                 // Remap: NewX = OldY, NewY = ScreenWidth - OldX
-                event.button.x = screenY; 
-                event.button.y = 720 - screenX; 
+                event.button.x = 1280 - screenY; 
+                event.button.y = screenX; 
                 
                 // Power Manager wake check
                 if (pwrMgr && event.type == SDL_MOUSEBUTTONDOWN) pwrMgr->registerActivity();
@@ -156,8 +156,8 @@ void DisplayManager::run(std::atomic<bool>& running) {
                 float screenY = event.tfinger.y; // 0.0 - 1.0
                 
                 // Remap Normalized Coordinates
-                event.tfinger.x = screenY;
-                event.tfinger.y = 1.0f - screenX;
+                event.tfinger.x = 1.0f - screenY;
+                event.tfinger.y = screenX;
                 
                 if (pwrMgr && event.type == SDL_FINGERDOWN) pwrMgr->registerActivity();
             }
@@ -197,7 +197,7 @@ void DisplayManager::run(std::atomic<bool>& running) {
             dstRect.h = 720;
 
 
-            SDL_RenderCopyEx(renderer, bufferTexture, nullptr, &dstRect, 90.0, nullptr, SDL_FLIP_NONE);
+            SDL_RenderCopyEx(renderer, bufferTexture, nullptr, &dstRect, 270.0, nullptr, SDL_FLIP_NONE);
             
             SDL_RenderPresent(renderer);
         }

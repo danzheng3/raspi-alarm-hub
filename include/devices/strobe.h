@@ -10,6 +10,7 @@ class strobe {
 
         bool strobeActivate();
         bool strobeToNormal();
+        bool strobeRead(); 
 
     private:
         GPIOPin strobePin;
