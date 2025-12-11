@@ -37,3 +37,7 @@ bool LED::turnOff() {
     return true;
 }
 
+std::array<int, 3> LED::getLEDStates() {
+    // Returns {val22, val23, val24}
+    return { A0Pin.pinRead(), A1Pin.pinRead(), A2Pin.pinRead() };
+}

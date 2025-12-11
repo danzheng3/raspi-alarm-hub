@@ -1,4 +1,5 @@
 #include "hardware_layer/GPIO.h"
+#include <array>
 #pragma once
 
 #define A0 22
@@ -14,6 +15,8 @@ class LED {
 
         bool setLED(int dayOfWeek);
         bool turnOff();
+
+        std::array<int, 3> getLEDStates();
 
     private:
         GPIOPin A0Pin;

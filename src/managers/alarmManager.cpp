@@ -114,12 +114,19 @@ void alarmManager::debugLEDs(bool state) {
     if (ledController) {
         if (state) {
             // 7 = Binary 111 (Turn A0, A1, A2 ALL ON)
-            ledController->setLED(7); 
+            ledController->setLED(8); 
             std::cout << "[DEBUG] LEDs (GPIO 22, 23, 24) set to ON" << std::endl;
         } else {
             ledController->turnOff();
             std::cout << "[DEBUG] LEDs set to OFF" << std::endl;
         }
+
+        std::array<int, 3> states = ledController->getLEDStates();
+
+        std::cout << "[TEST] LED Readback: "
+                  << "GPIO22=" << states[0] << " "
+                  << "GPIO23=" << states[1] << " "
+                  << "GPIO24=" << states[2] << std::endl;
     }
 }
 
