@@ -12,7 +12,7 @@ class BluetoothAdapter {
         void disconnect();
         bool isConnected();
 
-        bool sendGattMessage(const std::string& handle, const std::string& message, std::string deviceAddr = "");
+        bool sendGattMessage(const std::string& handle, const std::string& message, std::string deviceAddr = ""); // hard coded, need to adjust in the future.
 
     private:
         std::string speakerID;

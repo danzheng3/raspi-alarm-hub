@@ -59,18 +59,18 @@ bool MCP7940N::isClockRunning() {
 bool MCP7940N::startClock() {
     if (!i2cBus->setSlaveAddress(slaveAddress)) return false;
 
-    // 1. Read the current seconds register
+    // read
     uint8_t startReg = REG_SECONDS;
     if (!i2cBus->writeData(&startReg, 1)) return false;
     uint8_t secondsReg;
     if (!i2cBus->readData(&secondsReg, 1)) return false;
 
-    // 2. Prepare data to write back, setting the ST bit
+    // write back, set ST bit
     uint8_t buffer[2];
     buffer[0] = REG_SECONDS; // Register address
     buffer[1] = secondsReg | (1 << 7); // Set ST bit
 
-    // 3. Write it back
+    // write
     return i2cBus->writeData(buffer, 2);
 }
 

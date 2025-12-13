@@ -11,7 +11,6 @@ LED::~LED() {
 }
 
 bool LED::setLED(int dayOfWeek) {
-    // The input dayOfWeek (1=Sat to 7=Sun) is directly used as the MUX address.
     int muxAddress = dayOfWeek; 
 
     if (muxAddress < 0) muxAddress = 0; 

@@ -12,9 +12,6 @@ bool MCP3021::readValue(uint16_t& value) {
     uint8_t buffer[2];
     if (!i2cBus->readData(buffer, 2)) return false;
 
-    // This is the 10-bit conversion logic from your main.c
-    // Byte 1: [0, 0, 0, 0, D9, D8, D7, D6]
-    // Byte 2: [D5, D4, D3, D2, D1, D0, 0, 0]
     value = ((buffer[0] & 0x0F) << 6) | (buffer[1] >> 2);
     
     return true;

@@ -22,7 +22,6 @@ MusicPage::~MusicPage() {
 
 void MusicPage::initEQSliders() {
     eqSliders.clear();
-    // Position sliders on the RIGHT side of the screen
     int startX = 700; 
     int startY = 150; 
     int spacing = 75;
@@ -57,7 +56,7 @@ void MusicPage::render(SDL_Renderer* renderer) {
     int listY = 100;
     int listW = 600;
     int itemH = 60;
-    int visibleSongs = 8; // Fits in 720p height comfortably
+    int visibleSongs = 8;
 
     renderText(renderer, "Library", listX, listY - 40, white, buttonFont);
 
@@ -75,7 +74,6 @@ void MusicPage::render(SDL_Renderer* renderer) {
     // --- RIGHT SIDE: Equalizer ---
     renderText(renderer, "Equalizer", 700, 80, white, buttonFont);
     
-    // Render sliders (logic remains similar, using new coordinates from initEQSliders)
     for (const auto& slider : eqSliders) {
         // 1. Draw Track Background
         SDL_SetRenderDrawColor(renderer, 60, 60, 70, 255);
@@ -83,16 +81,12 @@ void MusicPage::render(SDL_Renderer* renderer) {
         
         uint8_t val = eqMgr->getBand(slider.bandIndex);
         
-        // --- RENDER LOGIC: Map 255 (Low) -> 190 (High) to 0.0 -> 1.0 ---
         float range = 65.0f; // 255 - 190
         float percent = (255.0f - (float)val) / range;
         
         if (percent < 0.0f) percent = 0.0f;
         if (percent > 1.0f) percent = 1.0f;
 
-        // Calculate Y (Top is 0.0 distance from y, Bottom is height distance)
-        // percent 1.0 -> y offset 0
-        // percent 0.0 -> y offset height
         int knobH = 30;
         int activeHeight = (int)(percent * slider.trackRect.h);
         int knobY = slider.trackRect.y + slider.trackRect.h - activeHeight - (knobH/2);
@@ -125,7 +119,6 @@ void MusicPage::render(SDL_Renderer* renderer) {
     int btnH = 60;
     int btnSpacing = 20;
     
-    // Center the controls relative to the Song List (0-650 area)
     int ctrlCenterX = listX + listW/2;
     int startBtnX = ctrlCenterX - ( (4*btnW + 3*btnSpacing) / 2 );
 
@@ -222,11 +215,7 @@ void MusicPage::handleEvent(const SDL_Event& e) {
                 
                 if (pct < 0.0f) pct = 0.0f;
                 if (pct > 1.0f) pct = 1.0f;
-                
-                // 2. Map Percentage to Range [255 ... 190]
-                // 0.0 -> 255
-                // 1.0 -> 190
-                // Range Span = 65
+
                 
                 uint8_t newVal = 255 - (uint8_t)(pct * 65.0f);
                 
